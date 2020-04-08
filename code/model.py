@@ -1,46 +1,57 @@
 """
-    Module to define our model
+Module to define our model
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import transformers as hug
+import transformers
 
-class model(nn.Module):
+class Model(nn.Module):
     """
-        Define the architecture of the model
-    
-        Need to check architecture with Phu
+    Define the architecture of the model.
     """
-    def __init__(self, ndim, nout, vocab_size, meta):
-        # PLN definition task
-        self.classification = nn.Sequential(
-                nn.Linear(ndim, nout),
-                nn.ReLU
-                )
+    def __init__(self, config, nrating, nflag, load=False, load_name=None):
+        super(Model, self).__init__()
+        self.representation = transformers.AutoModel.from_config(config)
         
-        self.MLM = nn.Softmax(vocab_size)
+        # rating classifier
+        self.rating = nn.Sequential(
+            nn.Linear(config.hidden_size, nrating)
+            )
         
-        # RLN definiton as BERT or meta-BERT
-        self.representation = temp #BERT idk syntax
+        # false review classifier
+        self.flag = nn.Sequential(
+            nn.Linear(config.hidden_size,nflag)
+            )
         
-        # Load weights
-        if meta:
-            #load meta BERT weights to self.representation
-        else:
-            #load regular BERT weights
+        if load:
+            self.representation.load_state_dict(torch.load(load_name))
         
-    def forward(self, data, mask_idx):
-        embeddings = self.representation(data)
+    def forward(self,data):
         
-        # do task
-        out = self.classification(embeddings)
+        # get shape of data
+        batch_size, length = data.size()
         
-        #do MLM
-        masked_embedding = embeddings[mask_idx]
-        mlm_out = self.MLM(masked_embedding)
-        return out, mlm_out
+        # generate position ids of tokens
+        positions = torch.arange(length)        
+        position_ids = positions.repeat(batch_size,1)
+        
+        # pass through embedding network
+        embeddings = self.representation(
+                data,
+                position_ids=position_ids
+                )[0]
+        
+        # get [CLS] embedding
+        print(type(embeddings))
+        cls_embeddings = embeddings[:,0,:]
+        
+        # do tasks
+        rating_logits = self.rating(cls_embeddings)
+        flag_logits = self.flag(cls_embeddings)
+        
+        return rating_logits, flag_logits
 
 # ============================ Tester Model ============================
 
@@ -56,8 +67,8 @@ class test_model(nn.Module):
                  nout,
                  nhid,
                  embeddings,
-                 dropout_prob=0.5,
-                 meta
+                 meta,
+                 dropout_prob=0.5                 
                  ):
         """
             Constructor of test model. Will use small LSTM
