@@ -3,10 +3,13 @@ Testing for implementations - Will
 """
 
 import torch
+import torch.nn as nn
 import numpy as np
+from sklearn import metrics
 from datetime import datetime as dt
 import os
 import transformers
+import logging as log
 
 import myio
 import model
@@ -45,16 +48,52 @@ if True:
 if True: 
     rep_name = 'albert-base-v2'
     
+    loss = nn.CrossEntropyLoss()
     
     config = transformers.AutoConfig.from_pretrained(rep_name)
     learner = model.Model(config, 5, 2)
     
-    val_dl = data_handler.tasks.get('tester').get('dev')
-    val_data, val_labels = next(iter(val_dl))
-    rating, flag = learner(val_data)
+    test_dl = data_handler.tasks.get('tester').get('test')
     
-    print(rating)
-    print(flag)
+    with torch.no_grad():
+        test_data, val_labels = next(iter(test_dl))
+        rating, flag = learner(test_data)
+    
+        print(rating)
+        print(flag)
+        
+        r_val, r_idx = torch.max(rating, dim=1)
+        f_val, f_idx = torch.max(flag, dim=1)
+        
+        r_labels = val_labels[:,0]
+        f_labels = val_labels[:,1]
+        
+        
+        r_acc = metrics.accuracy_score(r_labels, r_idx)
+        r_f1 = metrics.f1_score(r_labels, r_idx, average='micro')
+        
+        f_acc = metrics.accuracy_score(f_labels, f_idx)
+        f_f1 = metrics.f1_score(f_labels, f_idx, average='micro')
+        
+        print(r_idx)
+        print(r_labels)
+        print(r_acc)
+        print(r_f1)
+        print('='*40)
+        print(f_idx)
+        print(f_labels)
+        print(f_acc)
+        print(f_f1)
+        print('='*40)
+        
+        print(loss(rating, r_labels))
+        print(loss(flag, f_labels))
+        
+        log.info('test')
+        
+        
+        
+        
     
     
             

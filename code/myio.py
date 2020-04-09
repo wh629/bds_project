@@ -12,9 +12,10 @@ from zipfile import ZipFile
 import io
 import csv
 import math
+import logging as log
 
 label_converter = {
-        'rating':{'1':1,'2':2,'3':3,'4':4,'5':5},
+        'rating':{'1':0,'2':1,'3':2,'4':3,'5':4},
         'flagged':{'True':True, 'False':False}
         }
 
@@ -57,7 +58,8 @@ class IO:
                  max_length,                        # maximum number of tokens
                  content='reviewContent',           # col name of review text
                  label_names=['rating', 'flagged'], # list of label col names
-                 split=0.2,                         # percent of data for validation
+                 val_split=0.1,                     # percent of data for validation
+                 test_split=0.1,                    # percent of data for test
                  batch_size=32,                     # batch size for training
                  shuffle=True                       # whether to shuffle train sampling
                  ):
@@ -68,7 +70,8 @@ class IO:
         self.pad_token = tokenizer.pad_token_id
         self.content = content
         self.label_names = label_names
-        self.split = split
+        self.val_split = val_split
+        self.test_split = test_split
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.tasks = {
@@ -114,9 +117,11 @@ class IO:
         Data is saved in a dictionary of DataLoader objects for train and
         validation keyed by 'train' and 'dev' respectively.
         """
+        log.info("="*40+" Reading Tasks "+"="*40)
         temp_task = {
                 'train': None, # dataloader for training data
-                'dev'  : None  # dataloader for validation data
+                'dev'  : None, # dataloader for validation data
+                'test' : None  # dataloader for test data
                 }
         
         for task in self.task_names:
@@ -153,11 +158,14 @@ class IO:
             dataset = FlaggedDataset(data, labels)
             
             # split to train and validation sets with `self.split`
-            val_size = int(math.floor(len(dataset)*self.split))
-            train_size = len(dataset)-val_size
+            val_size = int(math.ceil(len(dataset)*self.val_split))
+            test_size = int(math.ceil(len(dataset)*self.test_split))
+            train_size = len(dataset)-val_size-test_size
             
-            train_set, val_set = torch.utils.data.random_split(dataset,
-                                                               [train_size, val_size])
+            train_set, val_set, test_set = torch.utils.data.random_split(dataset,
+                                                                         [train_size,
+                                                                          val_size,
+                                                                          test_size])
                 
             # create DataLoader object. Shuffle for training.
             temp_task['train'] = DataLoader(dataset=train_set,
@@ -166,6 +174,10 @@ class IO:
                      shuffle=True)
             
             temp_task['dev'] = DataLoader(dataset=val_set,
+                     batch_size=self.batch_size,
+                     collate_fn=self.collate)
+            
+            temp_task['test'] = DataLoader(dataset=test_set,
                      batch_size=self.batch_size,
                      collate_fn=self.collate)
                
