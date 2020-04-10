@@ -10,15 +10,32 @@ from datetime import datetime as dt
 import os
 import transformers
 import logging as log
+import sys
 
 import myio
 import model
 
 # ============================= Testing Data Loading ==============================
+wd = os.getcwd()
+
+
+# for Spyder to get logging to work
+root = log.getLogger()
+while len(root.handlers):
+    root.removeHandler(root.handlers[0])
+
+# define logger
+log_fname = os.path.join(wd, "logs", "log_{}.log".format(
+    dt.now().strftime("%Y%m%d_%H%M")))
+log.basicConfig(filename=log_fname,
+    format='%(asctime)s - %(name)s - %(message)s',
+    level=log.INFO)
+root.addHandler(log.StreamHandler())
+
+log.info('Start')
 if True:
     
     # set parameters for IO object
-    wd = os.getcwd()
     data_dir = os.path.join(wd, r'cleaned')
     task_names = ['tester']
     tokenizer = transformers.AutoTokenizer.from_pretrained('albert-base-v2')
@@ -89,8 +106,14 @@ if True:
         print(loss(rating, r_labels))
         print(loss(flag, f_labels))
         
-        log.info('test')
-        
+log.info('End')   
+
+# release logs from Python
+handlers = log.getLogger().handlers
+for handler in handlers:
+    handler.close()
+    
+
         
         
         

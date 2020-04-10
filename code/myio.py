@@ -5,9 +5,8 @@ Module with class io containing methods for importing and exporting data
 import os
 import torch
 from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm, trange
+#from tqdm import tqdm
 import pandas as pd
-import numpy as np
 from zipfile import ZipFile
 import io
 import csv
@@ -129,7 +128,6 @@ class IO:
             data = []
             labels = []
             
-            print(os.path.join(self.data_dir,task+r'.zip'))
             with ZipFile(os.path.join(self.data_dir,task+r'.zip')) as zf:
                 with zf.open(task+r'.csv','r') as file:
                     reader = csv.reader(io.TextIOWrapper(file, 'utf-8'))
@@ -139,7 +137,7 @@ class IO:
             input_data.pop(0)
                 
             # for each review
-            for i, entry in enumerate(tqdm(input_data)):
+            for i, entry in enumerate(input_data):
                 obs = self.tokenizer.encode(entry.get(self.content),
                                             add_special_tokens=True,
                                             max_length=self.max_length)

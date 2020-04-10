@@ -1,0 +1,134 @@
+2020-04-10 19:43:56,214 - root - Start
+2020-04-10 19:43:56,422 - transformers.configuration_utils - loading configuration file https://s3.amazonaws.com/models.huggingface.co/bert/albert-base-v2-config.json from cache at C:\Users\Willi\.cache\torch\transformers\0bbb1531ce82f042a813219ffeed7a1fa1f44cd8f78a652c47fc5311e0d40231.49ede2f5cbd21a453ab03ed1214f9068f024910f34b5023577f3d0068326f7b0
+2020-04-10 19:43:56,426 - transformers.configuration_utils - Model config AlbertConfig {
+  "_num_labels": 2,
+  "architectures": [
+    "AlbertForMaskedLM"
+  ],
+  "attention_probs_dropout_prob": 0,
+  "bad_words_ids": null,
+  "bos_token_id": 2,
+  "classifier_dropout_prob": 0.1,
+  "decoder_start_token_id": null,
+  "do_sample": false,
+  "down_scale_factor": 1,
+  "early_stopping": false,
+  "embedding_size": 128,
+  "eos_token_id": 3,
+  "finetuning_task": null,
+  "gap_size": 0,
+  "hidden_act": "gelu_new",
+  "hidden_dropout_prob": 0,
+  "hidden_size": 768,
+  "id2label": {
+    "0": "LABEL_0",
+    "1": "LABEL_1"
+  },
+  "initializer_range": 0.02,
+  "inner_group_num": 1,
+  "intermediate_size": 3072,
+  "is_decoder": false,
+  "is_encoder_decoder": false,
+  "label2id": {
+    "LABEL_0": 0,
+    "LABEL_1": 1
+  },
+  "layer_norm_eps": 1e-12,
+  "length_penalty": 1.0,
+  "max_length": 20,
+  "max_position_embeddings": 512,
+  "min_length": 0,
+  "model_type": "albert",
+  "net_structure_type": 0,
+  "no_repeat_ngram_size": 0,
+  "num_attention_heads": 12,
+  "num_beams": 1,
+  "num_hidden_groups": 1,
+  "num_hidden_layers": 12,
+  "num_memory_blocks": 0,
+  "num_return_sequences": 1,
+  "output_attentions": false,
+  "output_hidden_states": false,
+  "output_past": true,
+  "pad_token_id": 0,
+  "prefix": null,
+  "pruned_heads": {},
+  "repetition_penalty": 1.0,
+  "task_specific_params": null,
+  "temperature": 1.0,
+  "top_k": 50,
+  "top_p": 1.0,
+  "torchscript": false,
+  "type_vocab_size": 2,
+  "use_bfloat16": false,
+  "vocab_size": 30000
+}
+
+2020-04-10 19:43:56,584 - transformers.tokenization_utils - loading file https://s3.amazonaws.com/models.huggingface.co/bert/albert-base-v2-spiece.model from cache at C:\Users\Willi\.cache\torch\transformers\dd1588b85b6fdce1320e224d29ad062e97588e17326b9d05a0b29ee84b8f5f93.c81d4deb77aec08ce575b7a39a989a79dd54f321bfb82c2b54dd35f52f8182cf
+2020-04-10 19:43:56,662 - root - ======================================== Reading Tasks ========================================
+2020-04-10 19:43:56,907 - transformers.configuration_utils - loading configuration file https://s3.amazonaws.com/models.huggingface.co/bert/albert-base-v2-config.json from cache at C:\Users\Willi\.cache\torch\transformers\0bbb1531ce82f042a813219ffeed7a1fa1f44cd8f78a652c47fc5311e0d40231.49ede2f5cbd21a453ab03ed1214f9068f024910f34b5023577f3d0068326f7b0
+2020-04-10 19:43:56,911 - transformers.configuration_utils - Model config AlbertConfig {
+  "_num_labels": 2,
+  "architectures": [
+    "AlbertForMaskedLM"
+  ],
+  "attention_probs_dropout_prob": 0,
+  "bad_words_ids": null,
+  "bos_token_id": 2,
+  "classifier_dropout_prob": 0.1,
+  "decoder_start_token_id": null,
+  "do_sample": false,
+  "down_scale_factor": 1,
+  "early_stopping": false,
+  "embedding_size": 128,
+  "eos_token_id": 3,
+  "finetuning_task": null,
+  "gap_size": 0,
+  "hidden_act": "gelu_new",
+  "hidden_dropout_prob": 0,
+  "hidden_size": 768,
+  "id2label": {
+    "0": "LABEL_0",
+    "1": "LABEL_1"
+  },
+  "initializer_range": 0.02,
+  "inner_group_num": 1,
+  "intermediate_size": 3072,
+  "is_decoder": false,
+  "is_encoder_decoder": false,
+  "label2id": {
+    "LABEL_0": 0,
+    "LABEL_1": 1
+  },
+  "layer_norm_eps": 1e-12,
+  "length_penalty": 1.0,
+  "max_length": 20,
+  "max_position_embeddings": 512,
+  "min_length": 0,
+  "model_type": "albert",
+  "net_structure_type": 0,
+  "no_repeat_ngram_size": 0,
+  "num_attention_heads": 12,
+  "num_beams": 1,
+  "num_hidden_groups": 1,
+  "num_hidden_layers": 12,
+  "num_memory_blocks": 0,
+  "num_return_sequences": 1,
+  "output_attentions": false,
+  "output_hidden_states": false,
+  "output_past": true,
+  "pad_token_id": 0,
+  "prefix": null,
+  "pruned_heads": {},
+  "repetition_penalty": 1.0,
+  "task_specific_params": null,
+  "temperature": 1.0,
+  "top_k": 50,
+  "top_p": 1.0,
+  "torchscript": false,
+  "type_vocab_size": 2,
+  "use_bfloat16": false,
+  "vocab_size": 30000
+}
+
+2020-04-10 19:44:00,148 - root - End
