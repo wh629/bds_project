@@ -1,70 +1,92 @@
 """
 Main run script to execute experiments and analysis
+
+NOT TESTED
 """
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as opt
-import transformers as hug
+
+import transformers
 import os
-from tqdm import tqdm, trange
-import argparse
+import sys
+import logging as log
 
 # =============== Self Defined ===============
-import io            # module for handling import/export of data
-import utils         # utility functions for training and and evaluating
+import myio          # module for handling import/export of data
+import learner       # training object
 import model         # module to define model architecture
-import meta_learning # module for meta-learning (OML)
-import cont_learning # module for continual learning
-import analyze       # module for analyzing results
+import args          # module to store arguments
 
-args = argparse.ArgumentParser()
-args.add_argument('--data', type=str, default='/data',
-                  help='directory storing all data')
-args.add_argument('--save_dir', type=str, default='/results',
-                    help='directory to save results')
-args.add_argument('--meta_epochs', type=int, default=100,
-                  help='number of epochs for meta-learning')
-args.add_argument('--meta_epochs', type=int, default=100,
-                  help='number of epochs for meta-learning')
-args.add_argument('--fine_tune_epochs', type=int, default=100000,
-                  help='number of epochs for fine-tuning')
-args.add_argument('--lr', type=float, default=20,
-                    help='initial learning rate')
-args.add_argument('--batch_size', type=int, default=20,
-                    help='batch size')
-#args.add_argument('--dropout', type=float, default=0.2,
-#                    help='dropout applied to layers (0 = no dropout)')
-args.add_argument('--seed', type=int, default=1111,
-                    help='random seed')
-args.add_argument('--model', type=str, default='BERT',
-                    help='name of RLN network. default is BERT')
+def main():
+    label_order = {'rating':0,
+                   'flagged':1}
 
-# Set devise to CPU if available
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print("Device is {}".format(device))
+    # parse arguments
+    parser = args.args
 
-# create io object to import data
+    # Set devise to CPU if available
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print("Device is {}".format(device))
+    
+    # set data directory
+    wd = os.getcwd()
+    if os.path.isdir(parser.data_dir):
+        data_path = parser.data_dir
+    else:
+        data_path = os.path.join(wd, parser.data_dir)
+            
+    # import data    
+    task_names = [parser.data_name]
+    tokenizer = transformers.AutoTokenizer.from_pretrained(parser.model)
+    label_names = parser.label_names.split(',')
+    data_handler = myio.IO(data_dir    = data_path,
+                           task_names  = task_names,
+                           tokenizer   = tokenizer,
+                           max_length  = parser.input_length,
+                           batch_size  = parser.batch_size,
+                           label_names = label_names
+                           )
+    
+    data_handler.read_task()
 
-# define models
-
-# continual learning for baseline BERT
-
-# meta-learning to get Meta-BERT
-
-# continual learning for Meta-BERT
-
-# analyze results from continual learning steps
-
-# save results with io
-
-
-"""
-model = model.model(...)
-model_meta = model.model(...)
-optimizer = opt.Adam(model.parameters, arguments)
-optimizer_rln = opt.Adam(model_meta.representation.parameters, arguments)
-optimizer_pln = opt.Adam(model_meta.classification.parameters, arguments)
-loss = nn.NLLLoss(arguments)
-"""
+    # define model
+    number_labels = [int(n) for n in parser.label_numbers.split(',')]
+    config = transformers.AutoConfig.from_pretrained(parser.model)
+    classifier = model.Model(config=config, 
+                             nrating = number_labels[label_order.get('rating')],
+                             nflag = number_labels[label_order.get('flagged')]
+                             )
+    
+    # define trainer
+    weights = [float(w) for w in parser.label_weights.split(',')]
+    
+    train_data = data_handler.tasks.get(parser.data_name).get('train')
+    val_data = data_handler.tasks.get(parser.data_name).get('dev')
+    test_data = data_handler.tasks.get(parser.data_name).get('test')
+    
+    if os.path.isdir(parser.save_dir):
+        save_path = parser.save_dir
+    else:
+        save_path = os.path.join(wd, parser.save_dir)
+            
+    trainer = learner.Learner(model=classifier,
+                              device=device,
+                              train_data=train_data,
+                              val_data=val_data,
+                              test_data=test_data,
+                              rating_w = weights[label_order.get('rating')],
+                              flag_w = weights[label_order.get('flagged')],
+                              max_epochs = parser.max_epochs,
+                              save_path = save_path,
+                              lr = parser.lr,
+                              buffer_break= (parser.early_stop == 'True'),
+                              break_int = parser.patience
+                              )
+            
+    # train model
+    best_path = trainer.learn(model_name = parser.model,
+                              verbose = True,
+                              early_check = parser.early_stop
+                              )
+            
+    sys.exit(0)

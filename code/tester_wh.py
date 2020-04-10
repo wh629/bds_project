@@ -70,10 +70,10 @@ if True:
         
         
         r_acc = metrics.accuracy_score(r_labels, r_idx)
-        r_f1 = metrics.f1_score(r_labels, r_idx, average='micro')
+        r_f1 = metrics.f1_score(r_labels, r_idx, average='macro')
         
         f_acc = metrics.accuracy_score(f_labels, f_idx)
-        f_f1 = metrics.f1_score(f_labels, f_idx, average='micro')
+        f_f1 = metrics.f1_score(f_labels, f_idx, average='macro')
         
         print(r_idx)
         print(r_labels)

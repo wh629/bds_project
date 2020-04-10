@@ -36,7 +36,7 @@ class Learner():
                  log_int=1e4,               # logging interval
                  buffer_break=False,        # whether to do early breaking
                  break_int=10,              # buffer before early breaking
-                 f1_average='micro'         # averaging method for multi-class F1
+                 f1_average='macro'         # averaging method for multi-class F1
                  ):
         """
         Class for learning
