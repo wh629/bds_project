@@ -22,7 +22,7 @@ import args          # module to store arguments
 def main():
     
     # parse arguments
-    parser = args.args
+    parser = args.args.parse_args()
     
     # get working directory
     wd = os.getcwd()
