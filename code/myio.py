@@ -22,15 +22,17 @@ class FlaggedDataset(Dataset):
     """
     Custom Datset class to use Dataloader
     """
-    def __init__(self, data, target):
-        self.data = data
+    def __init__(self, reviews, other_data, target):
+        self.reviews = reviews
+        self.other_data = other_data
         self.target = target
     
     def __getitem__(self, index):
-        x = self.data[index]
+        x = self.reviews[index]
         y = self.target[index]
+        z = self.other_data[index]
         
-        return [x, y]
+        return [x, y, z]
     
     def __len__(self):
         return len(self.data)
@@ -51,16 +53,19 @@ class IO:
     
     """
     def __init__(self,
-                 data_dir,                          # name of the directory storing all tasks
-                 task_names,                        # task name
-                 tokenizer,                         # tokenizer to use
-                 max_length,                        # maximum number of tokens
-                 content='reviewContent',           # col name of review text
-                 label_names=['rating', 'flagged'], # list of label col names
+                 data_dir=None,                     # name of the directory storing all tasks
+                 model=None,                        # Huggingface model name
+                 task_names=None,                   # task name
+                 tokenizer=None,                    # tokenizer to use
+                 max_length=None,                   # maximum number of tokens
+                 content=['reviewContent'],         # col name of review text
+                 review_key='reviewContent',        # key for reviews
+                 label_names=['flagged'],           # list of label col names
                  val_split=0.1,                     # percent of data for validation
                  test_split=0.1,                    # percent of data for test
                  batch_size=32,                     # batch size for training
-                 shuffle=True                       # whether to shuffle train sampling
+                 shuffle=True,                      # whether to shuffle train sampling
+                 cache=True,                        # whether to cache data if reading for first time
                  ):
         self.data_dir = data_dir
         self.task_names = task_names
@@ -68,15 +73,22 @@ class IO:
         self.max_length = max_length
         self.pad_token = tokenizer.pad_token_id
         self.content = content
+        self.review_key = review_key
         self.label_names = label_names
         self.val_split = val_split
         self.test_split = test_split
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.cache = cache
+        
         self.tasks = {
                 'reviews_UIC' :None,
                 'tester'      :None
                 }
+        
+        self.cache_dir = os.path.join(data_dir, 'cached')
+        if not os.path.exists(self.cache_dir):
+            os.mkdir(self.cache_dir)
         
     def collate(self, batch):
         """
@@ -84,28 +96,30 @@ class IO:
         that all data have the same length. Needed for parallelization
         """
         
-        data_list = []  # store padded sequences
-        label_list = [] # store labels
+        review_list = []  # store padded sequences
+        other_list = []   # other observational data
+        label_list = []   # store labels
         max_batch_seq_len = min(self.max_length, 
                                 max(pd.DataFrame(batch).iloc[:,0].apply(len)))
                             # minimum of the longest sequence in batch
                             # and self.max_length
         
-        # make batch data uniform length
+        # make batch tokens uniform length
         for entry in batch:
-            label_list.append(entry[1])
-            assert type(entry[1])== list, "labels not list"
-            data = entry[0]
+            other_list.append(entry[1])
+            label_list.append(entry[2])
+            data = entry[0] # first observation is always review
             
-            diff = max_batch_seq_len - len(entry[0])
+            diff = max_batch_seq_len - len(data)
             if (diff) > 0:
                 data += [self.pad_token]*diff
-            data_list.append(data)
+            review_list.append(data)
             
-        data_list = torch.tensor(data_list)
+        review_list = torch.tensor(review_list)
+        other_list = torch.tensor(other_list)
         label_list = torch.tensor(label_list)
         
-        return [data_list, label_list]
+        return [review_list, other_list, label_list]
                 
     
     def read_task(self):
@@ -124,47 +138,76 @@ class IO:
                 }
         
         for task in self.task_names:
-            # lists to store data and labels for a given task
-            data = []
-            labels = []
-            
-            with ZipFile(os.path.join(self.data_dir,task+r'.zip')) as zf:
-                with zf.open(task+r'.csv','r') as file:
-                    reader = csv.reader(io.TextIOWrapper(file, 'utf-8'))
-                    header = [col_name for col_name in next(iter(reader))]
-                    input_data = [dict(zip(header, row)) for row in reader]
-            
-            input_data.pop(0)
+            cache_file = os.path.join(self.cache_dir,
+                                      "cached_{}_{}.pt".format(
+                                          task,
+                                          self.max_length))
+            if os.path.exists(cache_file):
+                log.info('Loading {} from cached file: {}'.format(
+                    task, cache_file))
+                loaded = torch.load(cache_file)
+                train_set, val_set, test_set = (
+                    loaded['train'],
+                    loaded['dev'],
+                    loaded['test']
+                    )
+            else:
+                # lists to store data and labels for a given task
+                reviews = []
+                other_data = []
+                labels = []
                 
-            # for each review
-            for i, entry in enumerate(input_data):
-                obs = self.tokenizer.encode(entry.get(self.content),
-                                            add_special_tokens=True,
-                                            max_length=self.max_length)
+                with ZipFile(os.path.join(self.data_dir,task+r'.zip')) as zf:
+                    with zf.open(task+r'.csv','r') as file:
+                        reader = csv.reader(io.TextIOWrapper(file, 'utf-8'))
+                        header = [col_name for col_name in next(iter(reader))]
+                        input_data = [dict(zip(header, row)) for row in reader]
                 
-                # collect labels as list
-                entry_labels = []
-                for label_name in self.label_names:
-                    entry_labels.append(label_converter.get(label_name)\
-                                        .get(entry.get(label_name)))
+                input_data.pop(0)
                     
-                # add review and labels to lists
-                data.append(obs)
-                labels.append(entry_labels)
+                # for each review
+                for i, entry in enumerate(input_data):
+                    observations = []
+                    for content_label in self.content:
+                        if content_label == self.review_key:
+                            review = self.tokenizer.encode(entry.get(self.content),
+                                                        add_special_tokens=True,
+                                                        max_length=self.max_length)
+                        else:
+# =============================================================================
+#                             # TO DO: Fill other observations
+# =============================================================================
+                            obs = None
+                            observations.append(obs)                       
+                    
+                    # collect labels as list
+                    entry_labels = []
+                    for label_name in self.label_names:
+                        entry_labels.append(label_converter.get(label_name)\
+                                            .get(entry.get(label_name)))
+                        
+                    # add review and labels to lists
+                    reviews.append(review)
+                    other_data.append(observations)
+                    labels.append(entry_labels)
+                    
+                # create a dataset object for the dataloader
+                dataset = FlaggedDataset(reviews, other_data, labels)
                 
-            # create a dataset object for the dataloader
-            dataset = FlaggedDataset(data, labels)
-            
-            # split to train and validation sets with `self.split`
-            val_size = int(math.ceil(len(dataset)*self.val_split))
-            test_size = int(math.ceil(len(dataset)*self.test_split))
-            train_size = len(dataset)-val_size-test_size
-            
-            train_set, val_set, test_set = torch.utils.data.random_split(dataset,
-                                                                         [train_size,
-                                                                          val_size,
-                                                                          test_size])
+                # split to train and validation sets with `self.split`
+                val_size = int(math.ceil(len(dataset)*self.val_split))
+                test_size = int(math.ceil(len(dataset)*self.test_split))
+                train_size = len(dataset)-val_size-test_size
                 
+                train_set, val_set, test_set = torch.utils.data.random_split(dataset,
+                                                                             [train_size,
+                                                                              val_size,
+                                                                              test_size])
+                
+                if self.cache:
+                    log.info('Saving {} processed data into cached file: {}'.format(task, cache_file))
+                    torch.save({'train' : train_set, 'dev' : val_set, 'test' : test_set}, cache_file)
+            
             # create DataLoader object. Shuffle for training.
             temp_task['train'] = DataLoader(dataset=train_set,
                      batch_size=self.batch_size,
@@ -181,8 +224,3 @@ class IO:
                
             # add task to `self.tasks`
             self.tasks[task] = temp_task
-    
-    def export_results(self):
-        """
-        Export results of analysis
-        """
