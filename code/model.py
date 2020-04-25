@@ -56,7 +56,10 @@ class Model(nn.Module):
         
         cls_embeddings = torch.squeeze(cls_embeddings)
         
-        inputs = torch.cat((cls_embeddings,other_data), dim=1)
+        if other_data is None:
+            inputs = cls_embeddings
+        else:
+            inputs = torch.cat((cls_embeddings,other_data), dim=1)
         
         # compute fake review logits
         flag_logits = self.flag(inputs)
