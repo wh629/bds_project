@@ -33,6 +33,7 @@ class Learner():
                  f1_average='macro',        # averaging method for multi-class F1
                  accumulate_int=1,          # interval for accumulating gradients
                  max_grad_norm=1,           # maximum gradient norm
+                 n_others=0,                # number of other statistics
                  ):
         """
         Class for learning
@@ -52,6 +53,7 @@ class Learner():
         self.f1_avg = f1_average
         self.accum_int = accumulate_int
         self.max_grad_norm = max_grad_norm
+        self.n_others = n_others
         
         # for multi-gpu
         if torch.cuda.is_avalailable() and torch.cuda.device_count() > 1 and not isinstance(self.model, nn.DataParallel):
@@ -178,8 +180,13 @@ class Learner():
         """
         TO DO: Pack inputs
         """
-        results = {'reviews' : reviews,
-                   }
+        if self.n_others > 0:
+            others = data
+        else:
+            others = None
+        
+        results = {'reviews'    : reviews,
+                   'other_data' : others}
         
         return results
         
