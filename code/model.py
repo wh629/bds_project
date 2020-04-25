@@ -10,27 +10,36 @@ class Model(nn.Module):
     """
     Define the architecture of the model.
     """
-    def __init__(self, config, nrating, nflag, load=False, load_name=None):
+    def __init__(self,
+                 model=None,
+                 config=None, 
+                 n_others=0, 
+                 n_flag=None,
+                 n_hidden = None,
+                 load=False, 
+                 load_name=None):
         super(Model, self).__init__()
-        self.representation = transformers.AutoModel.from_config(config)
+        self.representation = transformers.AutoModel.from_pretrained(model, config=config)
         
-        # rating classifier
-        self.rating = nn.Sequential(
-            nn.Linear(config.hidden_size, nrating)
-            )
+        if n_hidden == 0:
+            n_hidden = config.hidden_size+n_others
         
         # false review classifier
         self.flag = nn.Sequential(
-            nn.Linear(config.hidden_size,nflag)
+            nn.Linear(config.hidden_size+n_others, n_hidden),
+            nn.ReLU(),
+            nn.Linear(n_hidden, n_flag)
             )
         
         if load:
             self.representation.load_state_dict(torch.load(load_name))
         
-    def forward(self,data):
+    def forward(self,
+                reviews=None,
+                other_data=None):
         
         # get shape of data
-        batch_size, length = data.size()
+        batch_size, length = reviews.size()
         
         # generate position ids of tokens
         positions = torch.arange(length)        
@@ -38,16 +47,19 @@ class Model(nn.Module):
         
         # pass through embedding network
         embeddings = self.representation(
-                data,
+                reviews,
                 position_ids=position_ids
                 )[0]
         
         # get [CLS] embedding
         cls_embeddings = embeddings[:,0,:]
         
-        # do tasks
-        rating_logits = self.rating(cls_embeddings)
-        flag_logits = self.flag(cls_embeddings)
+        cls_embeddings = torch.squeeze(cls_embeddings)
         
-        return rating_logits, flag_logits
+        inputs = torch.cat((cls_embeddings,other_data), dim=1)
+        
+        # compute fake review logits
+        flag_logits = self.flag(inputs)
+        
+        return flag_logits
         
