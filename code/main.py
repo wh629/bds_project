@@ -91,6 +91,7 @@ def main():
     config = transformers.AutoConfig.from_pretrained(parser.model)
     classifier = model.Model(model=parser.model,
                              config = config,
+                             n_others = parser.n_others,
                              n_hidden = parser.n_class_hidden,
                              n_flag = parser.n_labels
                              )
