@@ -12,17 +12,18 @@ import logging as log
 import random
 import numpy as np
 from datetime import datetime as dt
+import json
 
 # =============== Self Defined ===============
-import myio          # module for handling import/export of data
-import learner       # training object
-import model         # module to define model architecture
-import args          # module to store arguments
+import myio            # module for handling import/export of data
+import learner         # training object
+import model           # module to define model architecture
+from args import args  # module to store arguments
 
 def main():
     
     # parse arguments
-    parser = args.args.parse_args()
+    parser = args.parse_args()
     
     # get working directory
     wd = os.getcwd()
@@ -31,13 +32,9 @@ def main():
     log_fname = os.path.join(wd, "logs", "log_{}.log".format(
     dt.now().strftime("%Y%m%d_%H%M")))
     
-    root = log.getLogger()
-    while len(root.handlers):
-        root.removeHandler(root.handlers[0])
     log.basicConfig(filename=log_fname,
             format='%(asctime)s: %(name)s || %(message)s',
             level=log.INFO)
-    root.addHandler(log.StreamHandler())
     
 # =============================================================================
 #     start
@@ -47,22 +44,17 @@ def main():
 # =============================================================================
 #     misc stuff    
 # =============================================================================
-    label_order = {'rating':0,
-                   'flagged':1}
     
     # Set devise to CPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     log.info("Device is {}".format(device))
     
     # set random seeds
     random.seed(parser.seed)
     np.random.seed(parser.seed)
     torch.manual_seed(parser.seed)
-    if device == "cuda":
-        torch.cuda.manual_seed(parser.seed)
+    if torch.cuda.is_available():
         torch.cuda.manual_seed_all(parser.seed)
-        torch.backends.cudnn.benchmark = False
-        torch.backends.cudnn.deterministic = True
     
     # set data directory
     if os.path.isdir(parser.data_dir):
@@ -76,9 +68,11 @@ def main():
 #     import data
 # =============================================================================
     task_names = [parser.data_name]
-    tokenizer = transformers.AutoTokenizer.from_pretrained(parser.model)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(parser.model,
+                                                           do_lower_case=parser.do_lower_case)
     label_names = parser.label_names.split(',')
     data_handler = myio.IO(data_dir    = data_path,
+                           model_name  = parser.model,
                            task_names  = task_names,
                            tokenizer   = tokenizer,
                            max_length  = parser.input_length,
@@ -94,21 +88,16 @@ def main():
 #     define model
 # =============================================================================
     log.info("="*40 + " Defining Model " + "="*40)
-    number_labels = [int(n) for n in parser.label_numbers.split(',')]
     config = transformers.AutoConfig.from_pretrained(parser.model)
-    classifier = model.Model(config=config, 
-                             nrating = number_labels[label_order.get('rating')],
-                             nflag = number_labels[label_order.get('flagged')]
+    classifier = model.Model(model=parser.model,
+                             config = config,
+                             n_hidden = parser.n_class_hidden,
+                             n_flag = parser.n_labels
                              )
     
 # =============================================================================
 #     define trainer
 # =============================================================================
-    weights = [float(w) for w in parser.label_weights.split(',')]
-    
-    train_data = data_handler.tasks.get(parser.data_name).get('train')
-    val_data = data_handler.tasks.get(parser.data_name).get('dev')
-    test_data = data_handler.tasks.get(parser.data_name).get('test')
     
     if os.path.isdir(parser.save_dir):
         save_path = parser.save_dir
@@ -119,36 +108,35 @@ def main():
     log.info("="*40 + " Defining Trainer " + "="*40)
     
     # create trainer object
-    trainer = learner.Learner(model        = classifier,
-                              device       = device,
-                              train_data   = train_data,
-                              val_data     = val_data,
-                              test_data    = test_data,
-                              rating_w     = weights[label_order.get('rating')],
-                              flag_w       = weights[label_order.get('flagged')],
-                              max_epochs   = parser.max_epochs,
-                              save_path    = save_path,
-                              lr           = parser.lr,
-                              buffer_break = (parser.early_stop == 'True'),
-                              break_int    = parser.patience
+    trainer = learner.Learner(model          = classifier,
+                              device         = device,
+                              myio           = data_handler,
+                              max_epochs     = parser.max_epochs,
+                              save_path      = save_path,
+                              lr             = parser.lr,
+                              pct_start      = parser.pct_start,
+                              anneal_strategy= parser.anneal_strategy,
+                              log_int        = parser.log_int,
+                              buffer_break   = not parser.no_early_stop,
+                              break_int      = parser.patience,
+                              accumulate_int = parser.grad_accum,
+                              max_grad_norm  = parser.max_grad_norm,
                               )
             
     # train model
-    best_path, best_emb_path = trainer.learn(model_name  = parser.model,
-                                             verbose     = True,
-                                             early_check = parser.early_stop
-                                             )
+    best = trainer.learn(model_name  = parser.model,
+                         early_check = parser.early_stop_criteria
+                         )
+    
+    best['experiment'] = parser.exp_name
+        
+    #write results to "results.jsonl"
+    results_name = os.path.join(parser.results_dir, "val_results.jsonl")
+    with open(results_name, 'a') as f:
+        f.write(json.dumps(best)+"\n")
     
     log.info("="*40 + " Program Complete " + "="*40)
-    log.info("Best Total Weights in {}".format(best_path))
-    log.info("Best Embedding Weights in {}".format(best_emb_path))
+    log.info("="*40 + " Results written to {} ".format(results_name) + "="*40)
     
-    # release logs
-    for handler in log.getLogger().handlers:
-        handler.close()
-    
-    # exit python
-    sys.exit(0)
-
 if __name__ == "__main__":
     main()
