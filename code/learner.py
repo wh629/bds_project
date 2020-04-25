@@ -15,19 +15,19 @@ import numpy as np
 
 class Learner():
     def __init__(self,
-                 model,                     # model to train
-                 device,                    # device to run on
-                 myio,                      # myio object for data loading
-                 max_epochs,                # maximum number of epochs
-                 save_path,                 # path to save best weights
+                 model=None,                # model to train
+                 device=None,               # device to run on
+                 myio=None,                 # myio object for data loading
+                 max_epochs=None,           # maximum number of epochs
+                 save_path=None,            # path to save best weights
                  loss=None,                 # loss function for rating objective
                  optimizer=None,            # optimizer for training
                  lr=0.001,                  # optimizer learning rate
                  weight_decay=0.0,          # optimizer weight decay
-                 pct_start = 0.3,           # scheduler warm-up percentage
+                 pct_start = 0.00,          # scheduler warm-up percentage
                  anneal_strategy='linear',  # scheduler annealing strategy
                  cycle_momentum=False,      # scheduler whether to alternate momentums
-                 log_int=1e4,               # logging interval
+                 log_int=1,                 # logging interval
                  buffer_break=False,        # whether to do early breaking
                  break_int=10,              # buffer before early breaking
                  f1_average='macro',        # averaging method for multi-class F1
@@ -168,6 +168,21 @@ class Learner():
         
         log.info(logging_string)
     
+    def move_list_to_device(self, data):
+        result = []
+        for element in data:
+            result.append(element.to(self.device))
+        return result
+    
+    def pack_inputs(self, reviews, data):
+        """
+        TO DO: Pack inputs
+        """
+        results = {'reviews' : reviews,
+                   }
+        
+        return results
+        
 # =============================================================================
 #     Training helper methods
 # =============================================================================
@@ -175,6 +190,7 @@ class Learner():
     def train_step(self, 
               iteration,   # integer of epoch
               accumulated, # number of accumulation steps
+              reviews,     # reviews for batch
               data,        # data for batch
               labels,      # labels for batch
               ):
@@ -204,17 +220,17 @@ class Learner():
         self.model.train()
         
         # send data and labels to device
-        for key, value in data.items():
-            data[key] = value.to(self.device)
-                
+        data = self.move_list_to_device(data)
+        reviews = reviews.to(self.device)
         labels = labels.to(self.device)
+        input_data = self.pack_inputs(reviews, data)
         
         # zero gradients related to optimizer if new start of accumulation
         if accumulated == 0:
             self.model.zero_grad()
     
         # send data through model forward
-        logits = self.model(**data)
+        logits = self.model(**input_data)
     
         # calculate loss
         l = self.loss(logits, labels)
@@ -281,15 +297,15 @@ class Learner():
         
         # don't need to track gradient
         with torch.no_grad():
-            for i, (data, labels) in enumerate(data_loader):
+            for i, (reviews, data, labels) in enumerate(data_loader):
                 # send data and labels to device
-                for key, value in data.items():
-                    data[key] = value.to(self.device)
-                
+                data = self.move_list_to_device(data)
+                reviews = reviews.to(self.device)
                 labels = labels.to(self.device)
+                input_data = self.pack_inputs(reviews, data)
                 
                 # send data through forward
-                logits = self.model(**data)
+                logits = self.model(**input_data)
                 
                 # calculate loss
                 l = self.loss(logits, labels)
@@ -377,8 +393,8 @@ class Learner():
         for epoch in trange(0, int(self.max_epochs), desc = 'Epoch', mininterval = 30):
             
             # train
-            for i, (data, labels) in enumerate(tqdm(train_data, desc='Epoch Iteration', mininterval=30)):
-                train_results, accumulated = self.train(i, accumulated, data, labels)
+            for i, (reviews, data, labels) in enumerate(tqdm(train_data, desc='Epoch Iteration', mininterval=30)):
+                train_results, accumulated = self.train(i, accumulated, reviews, data, labels)
                 global_step += 1
             
             # evaluate every epoch
@@ -406,21 +422,21 @@ class Learner():
                       ):
                     stop = True
                     
-                if stop:
-                    log.info('='*40 + ' Early Stop at Epoch: {} '.format(epoch) + '='*40)
-                    break
+            if stop:
+                log.info('='*40 + ' Early Stop at Epoch: {} '.format(epoch) + '='*40)
+                break
     
-                # log results every interval
-                if epoch % self.log_int == 0 and verbose:
-                    self.log_results(train_results,
-                                     log_type = 'Training',
-                                     epoch = epoch
-                                     )
-                    self.log_results(best,
-                                     log_type = 'Validation',
-                                     early_check = early_check,
-                                     epoch = best_epoch
-                                     )
+            # log results every interval
+            if epoch % self.log_int == 0 and verbose:
+                self.log_results(train_results,
+                                 log_type = 'Training',
+                                 epoch = epoch
+                                 )
+                self.log_results(best,
+                                 log_type = 'Validation',
+                                 early_check = early_check,
+                                 epoch = best_epoch
+                                 )
         
         # log best validation results
         self.log_results(best,
