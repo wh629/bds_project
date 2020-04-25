@@ -132,7 +132,7 @@ def main():
     best['experiment'] = parser.exp_name
         
     #write results to "results.jsonl"
-    results_name = os.path.join(parser.results_dir, "val_results.jsonl")
+    results_name = os.path.join(parser.results_dir, "results.jsonl")
     with open(results_name, 'a') as f:
         f.write(json.dumps(best)+"\n")
     
