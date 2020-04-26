@@ -1,6 +1,5 @@
 name: bds
 channels:
-    - conda-forge
     - pytorch
 dependencies:
     - python
