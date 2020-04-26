@@ -36,7 +36,6 @@ class Model(nn.Module):
         if load:
             self.representation.load_state_dict(torch.load(load_name))
         
-        
         self.loss = loss
         if loss == None:
             self.loss = nn.CrossEntropyLoss()
