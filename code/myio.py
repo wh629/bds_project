@@ -22,12 +22,12 @@ label_converter = {
 class IO:
     def __init__(self,
                  data_dir=None,                     # name of the directory storing all tasks
-                 task_names=None,                   # task name                                                 Why tasks?
+                 task_names=None,                   # task name                                                 Why tasks? from old code didn't want to go and change everything
                  tokenizer=None,                    # tokenizer to use
                  max_length=None,                   # maximum number of tokens
-                 content=['reviewContent'],         # col name of review text                                   What is this supposed to be? List of all columns?
+                 content=['reviewContent'],         # col name of review text                                   What is this supposed to be? List of all columns? yes
                  review_key='reviewContent',        # key for reviews
-                 label_names=['flagged'],             # list of label col names
+                 label_names=['flagged'],           # list of label col names
                  val_split=0.1,                     # percent of data for validation
                  test_split=0.1,                    # percent of data for test
                  batch_size=32,                     # batch size for training
@@ -124,6 +124,9 @@ class IO:
                                       "cached_{}_{}.pt".format(
                                           task,
                                           self.max_length))
+# =============================================================================
+#             # this won't be activated if you comment out caching
+# =============================================================================
             if os.path.exists(cache_file):
                 log.info('Loading {} from cached file: {}'.format(
                     task, cache_file))
@@ -135,6 +138,10 @@ class IO:
                                                 )
             else:
                 train_set, val_set, test_set = self.read_from_csv()
+                
+# =============================================================================
+#                 # why did you remove caching? this is to save time for data loading
+# =============================================================================
 #                 if self.cache:
 #                     log.info('Saving {} processed data into cached file: {}'.format(task, cache_file))
 #                     torch.save({'train' : train_set, 'dev' : val_set, 'test' : test_set}, cache_file)
@@ -155,13 +162,17 @@ class IO:
 
             # add task to `self.tasks`
             self.tasks[task] = task_data
-
+    
+# =============================================================================
+#     # can we keep the file name in this module intead of creating a new module just for the file name?
+# =============================================================================
     def read_from_csv(self):
         # lists to store data and labels for a given task
         reviews = []
         other_data = []
         labels = []
-
+        
+        # why did you remove this and use pandas instead? 
         # with ZipFile(os.path.join(self.data_dir,task+r'.zip')) as zf:
         #     with zf.open(task+r'.csv','r') as file:
         #         reader = csv.reader(io.TextIOWrapper(file, 'utf-8'))
@@ -169,7 +180,10 @@ class IO:
         #         input_data = [dict(zip(header, row)) for row in reader]
         #
         # input_data.pop(0)
-
+        
+# =============================================================================
+#         # please use os.path.join instead of simple string concatenation to avoid errors
+# =============================================================================
         input_data_df = pd.read_csv(self.data_dir + constants.UIC_DATASET_COMBINED_DEBUG)
 
         # for each review
@@ -197,7 +211,10 @@ class IO:
             reviews.append(review)
             labels.append(entry_labels)
         print(reviews)
-
+        
+# =============================================================================
+#         # still need to fill out other_data
+# =============================================================================
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)
 
