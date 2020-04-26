@@ -12,55 +12,22 @@ import io
 import csv
 import math
 import logging as log
+import constants, UICDataset
 
 label_converter = {
         'rating':{'1':0,'2':1,'3':2,'4':3,'5':4},
-        'flagged':{'True':True, 'False':False}
+        'flagged':{True:True, False:False}
         }
 
-class FlaggedDataset(Dataset):
-    """
-    Custom Datset class to use Dataloader
-    """
-    def __init__(self, reviews, other_data, target):
-        self.reviews = reviews
-        self.other_data = other_data
-        self.target = target
-    
-    def __getitem__(self, index):
-        x = self.reviews[index]
-        y = self.target[index]
-        z = self.other_data[index]
-        
-        return [x, y, z]
-    
-    def __len__(self):
-        return len(self.data)
-    
 class IO:
-    """
-    Object to store:
-        Import/Output Methods
-    
-    Task data in dictionary 'tasks' as DataLoader objects keyed by file name.
-    
-    Data is returned as PyTorch tensors.
-    
-    Labels are returned as list of lists because MRQA can have multiple
-        acceptable answers. The list is not uniform, so cannot convert to 
-        tensor. At loss evaluation, should convert label to PyTorch tensor and 
-        take best loss over all acceptable answers.
-    
-    """
     def __init__(self,
                  data_dir=None,                     # name of the directory storing all tasks
-                 model=None,                        # Huggingface model name
-                 task_names=None,                   # task name
+                 task_names=None,                   # task name                                                 Why tasks?
                  tokenizer=None,                    # tokenizer to use
                  max_length=None,                   # maximum number of tokens
-                 content=['reviewContent'],         # col name of review text
+                 content=['reviewContent'],         # col name of review text                                   What is this supposed to be? List of all columns?
                  review_key='reviewContent',        # key for reviews
-                 label_names=['flagged'],           # list of label col names
+                 label_names=['flagged'],             # list of label col names
                  val_split=0.1,                     # percent of data for validation
                  test_split=0.1,                    # percent of data for test
                  batch_size=32,                     # batch size for training
@@ -80,15 +47,29 @@ class IO:
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.cache = cache
-        
+
         self.tasks = {
                 'reviews_UIC' :None,
                 'tester'      :None
                 }
-        
+
         self.cache_dir = os.path.join(data_dir, 'cached')
         if not os.path.exists(self.cache_dir):
             os.mkdir(self.cache_dir)
+    """
+    Object to store:
+        Import/Output Methods
+    
+    Task data in dictionary 'tasks' as DataLoader objects keyed by file name.
+    
+    Data is returned as PyTorch tensors.
+    
+    Labels are returned as list of lists because MRQA can have multiple
+        acceptable answers. The list is not uniform, so cannot convert to 
+        tensor. At loss evaluation, should convert label to PyTorch tensor and 
+        take best loss over all acceptable answers.
+    
+    """
         
     def collate(self, batch):
         """
@@ -131,13 +112,14 @@ class IO:
         validation keyed by 'train' and 'dev' respectively.
         """
         log.info("="*40+" Reading Tasks "+"="*40)
-        temp_task = {
+        task_data = {
                 'train': None, # dataloader for training data
                 'dev'  : None, # dataloader for validation data
                 'test' : None  # dataloader for test data
                 }
-        
+        # print (self.task_names)
         for task in self.task_names:
+            print(task)
             cache_file = os.path.join(self.cache_dir,
                                       "cached_{}_{}.pt".format(
                                           task,
@@ -147,80 +129,82 @@ class IO:
                     task, cache_file))
                 loaded = torch.load(cache_file)
                 train_set, val_set, test_set = (
-                    loaded['train'],
-                    loaded['dev'],
-                    loaded['test']
-                    )
+                                                    loaded['train'],
+                                                    loaded['dev'],
+                                                    loaded['test']
+                                                )
             else:
-                # lists to store data and labels for a given task
-                reviews = []
-                other_data = []
-                labels = []
-                
-                with ZipFile(os.path.join(self.data_dir,task+r'.zip')) as zf:
-                    with zf.open(task+r'.csv','r') as file:
-                        reader = csv.reader(io.TextIOWrapper(file, 'utf-8'))
-                        header = [col_name for col_name in next(iter(reader))]
-                        input_data = [dict(zip(header, row)) for row in reader]
-                
-                input_data.pop(0)
-                    
-                # for each review
-                for i, entry in enumerate(input_data):
-                    observations = []
-                    for content_label in self.content:
-                        if content_label == self.review_key:
-                            review = self.tokenizer.encode(entry.get(self.content),
-                                                        add_special_tokens=True,
-                                                        max_length=self.max_length)
-                        else:
-# =============================================================================
-#                             # TO DO: Fill other observations
-# =============================================================================
-                            obs = None
-                            observations.append(obs)                       
-                    
-                    # collect labels as list
-                    entry_labels = []
-                    for label_name in self.label_names:
-                        entry_labels.append(label_converter.get(label_name)\
-                                            .get(entry.get(label_name)))
-                        
-                    # add review and labels to lists
-                    reviews.append(review)
-                    other_data.append(observations)
-                    labels.append(entry_labels)
-                    
-                # create a dataset object for the dataloader
-                dataset = FlaggedDataset(reviews, other_data, labels)
-                
-                # split to train and validation sets with `self.split`
-                val_size = int(math.ceil(len(dataset)*self.val_split))
-                test_size = int(math.ceil(len(dataset)*self.test_split))
-                train_size = len(dataset)-val_size-test_size
-                
-                train_set, val_set, test_set = torch.utils.data.random_split(dataset,
-                                                                             [train_size,
-                                                                              val_size,
-                                                                              test_size])
-                
-                if self.cache:
-                    log.info('Saving {} processed data into cached file: {}'.format(task, cache_file))
-                    torch.save({'train' : train_set, 'dev' : val_set, 'test' : test_set}, cache_file)
-            
+                train_set, val_set, test_set = self.read_from_csv()
+#                 if self.cache:
+#                     log.info('Saving {} processed data into cached file: {}'.format(task, cache_file))
+#                     torch.save({'train' : train_set, 'dev' : val_set, 'test' : test_set}, cache_file)
+#
             # create DataLoader object. Shuffle for training.
-            temp_task['train'] = DataLoader(dataset=train_set,
-                     batch_size=self.batch_size,
-                     collate_fn=self.collate,
-                     shuffle=True)
-            
-            temp_task['dev'] = DataLoader(dataset=val_set,
-                     batch_size=self.batch_size,
-                     collate_fn=self.collate)
-            
-            temp_task['test'] = DataLoader(dataset=test_set,
-                     batch_size=self.batch_size,
-                     collate_fn=self.collate)
-               
+            task_data['train'] = DataLoader(dataset=train_set,
+                                             batch_size=self.batch_size,
+                                             collate_fn=self.collate,
+                                             shuffle=True)
+
+            task_data['dev'] = DataLoader(dataset=val_set,
+                                             batch_size=self.batch_size,
+                                             collate_fn=self.collate)
+
+            task_data['test'] = DataLoader(dataset=test_set,
+                                             batch_size=self.batch_size,
+                                             collate_fn=self.collate)
+
             # add task to `self.tasks`
-            self.tasks[task] = temp_task
+            self.tasks[task] = task_data
+
+    def read_from_csv(self):
+        # lists to store data and labels for a given task
+        reviews = []
+        other_data = []
+        labels = []
+
+        # with ZipFile(os.path.join(self.data_dir,task+r'.zip')) as zf:
+        #     with zf.open(task+r'.csv','r') as file:
+        #         reader = csv.reader(io.TextIOWrapper(file, 'utf-8'))
+        #         header = [col_name for col_name in next(iter(reader))]
+        #         input_data = [dict(zip(header, row)) for row in reader]
+        #
+        # input_data.pop(0)
+
+        input_data_df = pd.read_csv(self.data_dir + constants.UIC_DATASET_COMBINED_DEBUG)
+
+        # for each review
+        for i, entry in input_data_df.iterrows():
+
+            observations = []
+            review = self.tokenizer.encode(entry[self.review_key],
+                                           add_special_tokens=True,
+                                           max_length=self.max_length)
+
+            # collect labels as list
+            entry_labels = []
+            for label_name in self.label_names:
+                entry_labels.append(label_converter.get(label_name) \
+                                    .get(entry[label_name]))
+
+            other_data.append(entry.drop(self.review_key).drop(self.label_names).values.tolist())
+
+            # for content_label in self.content:
+            #     if content_label == self.review_key:
+            #
+            #     else:
+
+            # add review and labels to lists
+            reviews.append(review)
+            labels.append(entry_labels)
+        print(reviews)
+
+        # create a dataset object for the dataloader
+        dataset = UICDataset.UICDataset(reviews, other_data, labels)
+
+        # split to train and validation sets with `self.split`
+        val_size = int(math.ceil(len(dataset) * self.val_split))
+        test_size = int(math.ceil(len(dataset) * self.test_split))
+        train_size = len(dataset) - val_size - test_size
+
+        return torch.utils.data.random_split(dataset,
+                                                [train_size, val_size, test_size])
