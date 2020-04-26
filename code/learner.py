@@ -20,7 +20,6 @@ class Learner():
                  myio=None,                 # myio object for data loading
                  max_epochs=None,           # maximum number of epochs
                  save_path=None,            # path to save best weights
-                 loss=None,                 # loss function for rating objective
                  optimizer=None,            # optimizer for training
                  lr=0.001,                  # optimizer learning rate
                  weight_decay=0.0,          # optimizer weight decay
@@ -58,9 +57,6 @@ class Learner():
         # for multi-gpu
         if torch.cuda.is_avalailable() and torch.cuda.device_count() > 1 and not isinstance(self.model, nn.DataParallel):
             self.model = nn.DataParallel(self.model)
-        
-        if loss == None:
-            self.rating_loss = nn.CrossEntropyLoss()
             
         if optimizer == None:
             self.optimizer = opt.AdamW(
@@ -176,7 +172,7 @@ class Learner():
             result.append(element.to(self.device))
         return result
     
-    def pack_inputs(self, reviews, data):
+    def pack_inputs(self, reviews, data, labels):
         """
         TO DO: Pack inputs
         """
@@ -186,7 +182,8 @@ class Learner():
             others = None
         
         results = {'reviews'    : reviews,
-                   'other_data' : others}
+                   'other_data' : others,
+                   'labels'     : labels}
         
         return results
         
@@ -230,17 +227,14 @@ class Learner():
         data = self.move_list_to_device(data)
         reviews = reviews.to(self.device)
         labels = labels.to(self.device)
-        input_data = self.pack_inputs(reviews, data)
+        input_data = self.pack_inputs(reviews, data, labels)
         
         # zero gradients related to optimizer if new start of accumulation
         if accumulated == 0:
             self.model.zero_grad()
     
         # send data through model forward
-        logits = self.model(**input_data)
-    
-        # calculate loss
-        l = self.loss(logits, labels)
+        l, logits = self.model(**input_data)
         
         # for multi-gpu
         if isinstance(self.model, nn.DataParallel):
@@ -309,13 +303,14 @@ class Learner():
                 data = self.move_list_to_device(data)
                 reviews = reviews.to(self.device)
                 labels = labels.to(self.device)
-                input_data = self.pack_inputs(reviews, data)
+                input_data = self.pack_inputs(reviews, data, labels)
                 
                 # send data through forward
-                logits = self.model(**input_data)
+                l, logits = self.model(**input_data)
                 
-                # calculate loss
-                l = self.loss(logits, labels)
+                # for multi-gpu
+                if isinstance(self.model, nn.DataParallel):
+                    l = l.mean() # average over multi-gpu loss
                 
                 # accumulate metrics
                 self.accumulate_metrics(metrics,
@@ -418,7 +413,12 @@ class Learner():
                     # record embedding weights if it's the metric we care about
                     if result_type == early_check:
                         # total model weights
-                        torch.save(self.model.state_dict(), best_path)
+                        if isinstance(self.model, nn.DataParallel):
+                            save_state = self.model.module.state_dict()
+                        else:
+                            save_state = self.model.state_dict()
+                        
+                        torch.save(save_state, best_path)
                         best_step = global_step
                         best_epoch = epoch
                     
@@ -453,7 +453,10 @@ class Learner():
                          )
         
         # test best model on test data
-        self.model.load_state_dict(torch.load(best_path))
+        if isinstance(self.model, nn.DataParallel):
+            self.model.module.load_state_dict(torch.load(best_path))
+        else:
+            self.model.load_state_dict(torch.load(best_path))
         test_results = self.evaluate(self.test_data, val=False)
         self.log_results(test_results,
                          log_type = 'Testing'
