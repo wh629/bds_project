@@ -57,6 +57,7 @@ class Learner():
         # for multi-gpu
         if torch.cuda.is_avalailable() and torch.cuda.device_count() > 1 and not isinstance(self.model, nn.DataParallel):
             self.model = nn.DataParallel(self.model)
+            self.model.to(self.device)
             
         if optimizer == None:
             self.optimizer = opt.AdamW(
