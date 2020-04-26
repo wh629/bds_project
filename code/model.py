@@ -17,7 +17,9 @@ class Model(nn.Module):
                  n_flag=None,
                  n_hidden = None,
                  load=False, 
-                 load_name=None):
+                 load_name=None,
+                 loss=None,
+                 ):
         super(Model, self).__init__()
         self.representation = transformers.AutoModel.from_pretrained(model, config=config)
         
@@ -34,9 +36,16 @@ class Model(nn.Module):
         if load:
             self.representation.load_state_dict(torch.load(load_name))
         
+        
+        self.loss = loss
+        if loss == None:
+            self.loss = nn.CrossEntropyLoss()
+        
     def forward(self,
                 reviews=None,
-                other_data=None):
+                other_data=None,
+                labels=None,
+                ):
         
         # get shape of data
         batch_size, length = reviews.size()
@@ -62,7 +71,10 @@ class Model(nn.Module):
             inputs = torch.cat((cls_embeddings,other_data), dim=1)
         
         # compute fake review logits
-        flag_logits = self.flag(inputs)
+        logits = self.flag(inputs)
         
-        return flag_logits
+        # compute loss
+        loss = self.loss(logits, labels)
+        
+        return loss, logits
         
