@@ -9,8 +9,8 @@ class UICDataset:
 
     def __getitem__(self, index):
         x = self.reviews[index]
-        y = self.target[index]
-        z = self.other_data[index]
+        y = self.other_data[index]
+        z = self.target[index]
 
         return [x, y, z]
 
