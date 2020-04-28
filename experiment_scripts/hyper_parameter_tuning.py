@@ -10,7 +10,7 @@ from shared_settings import make_command
 
 def select_candidates(dataset):
     lr_candidates = [1e-5, 3e-5, 5e-5]
-    bs_candidates = [8, 16, 32]
+    bs_candidates = [8]
     max_epochs_candidates = [10, 20, 40]
     seed_range = 1e6
     lr = lr_candidates[random.randrange(0, len(lr_candidates), 1)]
@@ -29,7 +29,7 @@ def submit_trials(args):
         lr, bs, max_epochs, seed = select_candidates(args.dataset)
         command = make_command(
             args.dataset,
-            args.framing,
+            args.model,
             args.max_length,
             lr,
             bs,

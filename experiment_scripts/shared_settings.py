@@ -17,7 +17,7 @@ def decode_exp_name(exp_name):
 
 def make_command(dataset, model, max_length, lr, bs, max_epochs, seed, gpu_capacity, data_dir, results_dir, accumulate):
 
-    exp_name = f"{encode_exp_name(dataset, model, lr, bs, max_epochs, seed)}"
+    exp_name = f"{encode_exp_name(dataset, model, max_length, lr, bs, max_epochs, seed)}"
     
     if accumulate:
         accumulation = int(numpy.ceil(bs / gpu_capacity))
