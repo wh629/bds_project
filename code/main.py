@@ -25,12 +25,13 @@ def main():
     # parse arguments
     parser = args.parse_args()
     
-    # get working directory
-    wd = os.getcwd()
-    
     # set up logger
-    log_fname = os.path.join(wd, "logs", "log_{}.log".format(
-    dt.now().strftime("%Y%m%d_%H%M")))
+    log_path = os.path.join(parser.save_dir, "logs")
+    if not os.path.exists(log_path):
+        os.mkdir(log_path)
+    
+    log_fname = os.path.join(log_path, "{}_log_{}.log".format(
+    parser.exp_name,dt.now().strftime("%Y%m%d_%H%M")))
     
     log.basicConfig(filename=log_fname,
             format='%(asctime)s: %(name)s || %(message)s',
