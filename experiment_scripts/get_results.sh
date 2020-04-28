@@ -4,11 +4,8 @@ module load cuda/10.1.105
 module load gcc/6.3.0
 source activate wsc
 
-export NLU_RESULTS_DIR=/scratch/wh629/nlu/projects/wsc/results
-export NLU_DATA_DIR=/scratch/wh629/nlu/projects/wsc/data
-NETID=wh629
-TRIALS=50
-DATA=wsc-cross
-FRAME=MC-MLM
+PROJECT=/scratch/wh629/bds/project
+export BDS_DATA_DIR=${PROJECT}/data
+export BDS_RESULTS_DIR=${PROJECT}/results
 
 python collect_results.py

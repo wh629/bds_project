@@ -30,6 +30,7 @@ def submit_trials(args):
         command = make_command(
             args.dataset,
             args.framing,
+            args.max_length,
             lr,
             bs,
             max_epochs,
@@ -84,8 +85,10 @@ if __name__ == "__main__":
                  'albert-xxlarge-v1'
                  },
     )
-    parser.add_argument("--accumulate", action='store_true')
+    
+    parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--gpu-capacity", type=int, default=8)
+    parser.add_argument("--accumulate", action='store_true')
 
     args = parser.parse_args()
     args.repo_dir = repo_dir

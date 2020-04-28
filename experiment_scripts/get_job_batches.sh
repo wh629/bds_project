@@ -4,17 +4,21 @@ module load cuda/10.1.105
 module load gcc/6.3.0
 source activate wsc
 
-export NLU_RESULTS_DIR=/scratch/wh629/nlu/projects/wsc/results
-export NLU_DATA_DIR=/scratch/wh629/nlu/projects/wsc/data
+PROJECT=/scratch/wh629/bds/project
+export BDS_DATA_DIR=${PROJECT}/data
+export BDS_RESULTS_DIR=${PROJECT}/results
 NETID=wh629
-TRIALS=50
-DATA=wsc-spacy
-FRAME=P-SPAN
-CAPACITY=1
+TRIALS=1
+DATA=reviews_UIC
+MODEL=roberta-large
+LENGTH=512
+CAPACITY=8
 
-python hyper_parameter_tuning_wh.py \
+python hyper_parameter_tuning.py \
 	--user ${NETID} \
 	--n-trials ${TRIALS} \
 	--dataset ${DATA} \
-	--framing ${FRAME} \
-	--gpu-capacity ${CAPACITY}
+	--model ${MODEL} \
+	--gpu-capacity ${CAPACITY} \
+	--max_length ${LENGTH} #\
+	#--accumulate
