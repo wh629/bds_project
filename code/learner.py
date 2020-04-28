@@ -353,7 +353,6 @@ class Learner():
         
         best_path = os.path.join(self.save_path, model_name + '_best.pt')
         best_rln_path = os.path.join(self.save_path, model_name + '_best_rln.pt')
-        best_step = 0
         best_epoch = 0
         stop = False
         
@@ -362,7 +361,7 @@ class Learner():
         test_data = self.IO.tasks[task_name]['test']
         
         # set max steps
-        self.max_steps = ((self.max_epochs*len(train_data.dataset))//self.batch_size)//self.accum_int
+        self.max_steps = ((self.max_epochs*len(train_data.dataset))//self.batch_size + 1)//self.accum_int
         
         if scheduler == None:
             self.scheduler = opt.lr_scheduler.OneCycleLR(
@@ -421,7 +420,7 @@ class Learner():
                         
                         torch.save(save_state, best_path)
                         torch.save(save_rln_state, best_rln_path)
-                        best_step = global_step
+                        best['best_step'] = global_step
                         best_epoch = epoch
                     
                 # check if early breaking requirements satisfied
@@ -464,8 +463,8 @@ class Learner():
                          log_type = 'Testing'
                          )
         
-        best['best_step'] = best_step
+        best['current_step'] = global_step
         for key, value in test_results.items():
-            best['test {}'.format(key)] = value
+            best['test_{}'.format(key)] = value
         
         return best
