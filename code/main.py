@@ -67,19 +67,23 @@ def main():
 # =============================================================================
 #     import data
 # =============================================================================
-    task_names = [parser.data_name]
+    task_names = parser.data_name.split(',')
+    content_headers = parser.content.split(',')
     tokenizer = transformers.AutoTokenizer.from_pretrained(parser.model,
                                                            do_lower_case=parser.do_lower_case)
-    label_names = parser.label_names.split(',')
     data_handler = myio.IO(data_dir    = data_path,
                            model_name  = parser.model,
                            task_names  = task_names,
                            tokenizer   = tokenizer,
                            max_length  = parser.input_length,
+                           content     = content_headers,
+                           label_name  = parser.label_name,
+                           review_key  = parser.review_key,
                            val_split   = parser.val_split,
                            test_split  = parser.test_split,
                            batch_size  = parser.batch_size,
-                           label_names = label_names
+                           shuffle     = not parser.no_shuffle,
+                           cache       = not parser.no_cache,
                            )
     
     data_handler.read_task()
@@ -89,11 +93,13 @@ def main():
 # =============================================================================
     log.info("="*40 + " Defining Model " + "="*40)
     config = transformers.AutoConfig.from_pretrained(parser.model)
-    classifier = model.Model(model=parser.model,
-                             config = config,
-                             n_others = parser.n_others,
-                             n_hidden = parser.n_class_hidden,
-                             n_flag = parser.n_labels
+    classifier = model.Model(model     = parser.model,
+                             config    = config,
+                             n_others  = parser.n_others,
+                             n_hidden  = parser.n_class_hidden,
+                             n_flag    = parser.n_labels,
+                             load      = parser.preload_emb,
+                             load_name = parser.preload_emb_name,
                              )
     
 # =============================================================================
@@ -115,24 +121,31 @@ def main():
                               max_epochs      = parser.max_epochs,
                               save_path       = save_path,
                               lr              = parser.lr,
+                              weight_decay    = parser.weight_decay,
                               pct_start       = parser.pct_start,
                               anneal_strategy = parser.anneal_strategy,
+                              cycle_momentum  = parser.cycle_momentum,
                               log_int         = parser.log_int,
                               buffer_break    = not parser.no_early_stop,
                               break_int       = parser.patience,
                               accumulate_int  = parser.grad_accum,
                               max_grad_norm   = parser.max_grad_norm,
-                              batch_size      = parser.batch_size
+                              n_others        = parser.n_others,
+                              batch_size      = parser.batch_size,
                               )
             
     # train model
     best = trainer.learn(model_name  = parser.model,
+                         task_name   = task_names[0],
                          early_check = parser.early_stop_criteria
                          )
     
     best['experiment'] = parser.exp_name
         
     #write results to "results.jsonl"
+    if not os.path.exists(parser.results_dir):
+        os.mkdir(parser.results_dir)
+    
     results_name = os.path.join(parser.results_dir, "results.jsonl")
     with open(results_name, 'a') as f:
         f.write(json.dumps(best)+"\n")
