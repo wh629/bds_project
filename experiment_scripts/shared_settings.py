@@ -33,7 +33,7 @@ def make_command(dataset, model, max_length, lr, bs, max_epochs, seed, gpu_capac
         f"--batch_size {bs} "
         f"--grad_accum {accumulation} "
         f"--lr {lr} "
-        f"--max-epochs {max_epochs} "
+        f"--max_epochs {max_epochs} "
         f"--data_dir {data_dir} "
         f"--save_dir {results_dir} "
     )
