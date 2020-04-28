@@ -3,4 +3,4 @@
 *.pyc
 *__pycache__/
 *logs/
-./experiment_scripts/wh629.sbatch
+experiment_scripts/wh629.sbatch
