@@ -5,20 +5,21 @@ Module to define our model
 import torch
 import torch.nn as nn
 import transformers
+import os
 
 class Model(nn.Module):
     """
     Define the architecture of the model.
     """
     def __init__(self,
-                 model=None,
-                 config=None, 
-                 n_others=0, 
-                 n_flag=None,
-                 n_hidden = None,
-                 load=False, 
-                 load_name=None,
-                 loss=None,
+                 model=None,        # model name
+                 config=None,       # Huggingface model configuration
+                 n_others=0,        # number of other statistics
+                 n_flag=2,          # number of classifications for flagging
+                 n_hidden = 0,      # hidden dimension for MLP classifier
+                 load=False,        # whether to preload embedding weights
+                 load_name=None,    # name of weights state dictionary file
+                 loss=None,         # type of loss. default is CrossEntropyLoss()
                  ):
         super(Model, self).__init__()
         self.representation = transformers.AutoModel.from_pretrained(model, config=config)
@@ -34,10 +35,11 @@ class Model(nn.Module):
             )
         
         if load:
+            assert os.path.exists(load_name), "preloaded embeddings don't exist: {}".format(load_name)
             self.representation.load_state_dict(torch.load(load_name))
         
         self.loss = loss
-        if loss == None:
+        if loss is None:
             self.loss = nn.CrossEntropyLoss()
         
     def forward(self,
