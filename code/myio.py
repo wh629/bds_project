@@ -2,17 +2,17 @@
 Module with class io containing methods for importing and exporting data
 """
 
-import os
-import torch
-from torch.utils.data import DataLoader, Dataset
-#from tqdm import tqdm
-import pandas as pd
-from zipfile import ZipFile
-import io
-import csv
-import math
 import logging as log
-import constants, UICDataset
+import math
+import os
+
+# from tqdm import tqdm
+import pandas as pd
+import torch
+from torch.utils.data import DataLoader
+
+import UICDataset
+import constants
 
 label_converter = {
         'rating':{'1':0,'2':1,'3':2,'4':3,'5':4},
@@ -22,12 +22,12 @@ label_converter = {
 class IO:
     def __init__(self,
                  data_dir=None,                     # name of the directory storing all tasks
-                 task_names=None,                   # task name                                                 Why tasks? from old code didn't want to go and change everything
+                 task_names=None,                   # task name
                  tokenizer=None,                    # tokenizer to use
                  max_length=None,                   # maximum number of tokens
-                 content=['reviewContent'],         # col name of review text                                   What is this supposed to be? List of all columns? yes
+                 content=['reviewContent'],         # col name of review text
                  review_key='reviewContent',        # key for reviews
-                 label_names=['flagged'],           # list of label col names
+                 label_names='flagged',             # list of label col names
                  val_split=0.1,                     # percent of data for validation
                  test_split=0.1,                    # percent of data for test
                  batch_size=32,                     # batch size for training
@@ -80,7 +80,7 @@ class IO:
         review_list = []  # store padded sequences
         other_list = []   # other observational data
         label_list = []   # store labels
-        max_batch_seq_len = min(self.max_length, 
+        max_batch_seq_len = min(self.max_length,
                                 max(pd.DataFrame(batch).iloc[:,0].apply(len)))
                             # minimum of the longest sequence in batch
                             # and self.max_length
@@ -95,11 +95,11 @@ class IO:
             if (diff) > 0:
                 data += [self.pad_token]*diff
             review_list.append(data)
-            
+
         review_list = torch.tensor(review_list)
         other_list = torch.tensor(other_list)
         label_list = torch.tensor(label_list)
-        
+
         return [review_list, other_list, label_list]
                 
     
@@ -162,10 +162,7 @@ class IO:
 
             # add task to `self.tasks`
             self.tasks[task] = task_data
-    
-# =============================================================================
-#     # can we keep the file name in this module intead of creating a new module just for the file name?
-# =============================================================================
+
     def read_from_csv(self):
         # lists to store data and labels for a given task
         reviews = []
@@ -194,14 +191,10 @@ class IO:
                                            add_special_tokens=True,
                                            max_length=self.max_length)
 
-            # collect labels as list
-            entry_labels = []
-            for label_name in self.label_names:
-                entry_labels.append(label_converter.get(label_name) \
-                                    .get(entry[label_name]))
+            labels.append(entry[self.label_names])
 
-            other_data.append(entry.drop(self.review_key).drop(self.label_names).values.tolist())
-
+            # other_data.append(entry.drop(self.review_key).drop(self.label_names).values.tolist())
+            other_data.append([False])
             # for content_label in self.content:
             #     if content_label == self.review_key:
             #
@@ -209,12 +202,9 @@ class IO:
 
             # add review and labels to lists
             reviews.append(review)
-            labels.append(entry_labels)
-        print(reviews)
-        
-# =============================================================================
-#         # still need to fill out other_data
-# =============================================================================
+
+            #TODO Update other_data based on statistic values
+
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)
 
