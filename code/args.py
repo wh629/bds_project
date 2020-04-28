@@ -39,7 +39,7 @@ args.add_argument('--val_split', type=float, default=0.1,
                   help='percent of data used for validation as decimal')
 args.add_argument('--test_split', type=float, default=0.1,
                   help='percent of data used for test as decimal')
-args.add_argument('--do_lower_case', type=bool, action='store_true',
+args.add_argument('--do_lower_case', action='store_true',
                   help='whether to do lower case for tokenizer')
 
 # model related information
@@ -76,7 +76,7 @@ args.add_argument('--patience', type=int, default=5,
                   help='number of epochs without improvement before early stopping')
 args.add_argument('--early_check', type=str, default='f1',
                   help='evaluation metric to check for early stopping')
-args.add_argument('--no_early_stop', type=bool, action='store_false',
+args.add_argument('--no_early_stop', action='store_true',
                   help='boolean whether to use early stopping')
 args.add_argument('--grad_accum', type=int, default=1,
                   help='number of gradient steps to accumulate for each step')
