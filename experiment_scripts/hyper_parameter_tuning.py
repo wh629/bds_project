@@ -39,10 +39,10 @@ def submit_trials(args):
             args.results_dir,
             args.accumulate
         )
-        sbatch_file = os.path.join(args.repo_dir, "exp_control", f"{args.user}.sbatch")
+        sbatch_file = os.path.join(args.repo_dir, "experiment_scripts", f"{args.user}.sbatch")
         jobs.append(f'COMMAND="{command}" sbatch {sbatch_file}\n')
 
-    with open(os.path.join(args.repo_dir, "exp_control", "submit_sbatch.sh"), "a") as f:
+    with open(os.path.join(args.repo_dir, "experiment_scripts", "submit_sbatch.sh"), "a") as f:
         for one_job in jobs:
             f.write(one_job)
 

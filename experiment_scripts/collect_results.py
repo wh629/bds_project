@@ -58,6 +58,8 @@ def collect_results(args):
     df_raw = pd.DataFrame.from_dict(results)
     df_raw.sort_values(by=["model", "best_val_accuracy"], ascending=False, inplace=True)
     df_raw.to_csv(os.path.join(args.results_dir, "raw_results.csv"), index=False)
+    
+    return
 
 
 if __name__ == "__main__":
