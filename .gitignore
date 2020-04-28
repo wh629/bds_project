@@ -3,3 +3,4 @@
 *.pyc
 *__pycache__/
 *logs/
+experiment_scripts/submit_sbatch.sh
