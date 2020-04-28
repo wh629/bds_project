@@ -109,19 +109,20 @@ def main():
     log.info("="*40 + " Defining Trainer " + "="*40)
     
     # create trainer object
-    trainer = learner.Learner(model          = classifier,
-                              device         = device,
-                              myio           = data_handler,
-                              max_epochs     = parser.max_epochs,
-                              save_path      = save_path,
-                              lr             = parser.lr,
-                              pct_start      = parser.pct_start,
-                              anneal_strategy= parser.anneal_strategy,
-                              log_int        = parser.log_int,
-                              buffer_break   = not parser.no_early_stop,
-                              break_int      = parser.patience,
-                              accumulate_int = parser.grad_accum,
-                              max_grad_norm  = parser.max_grad_norm,
+    trainer = learner.Learner(model           = classifier,
+                              device          = device,
+                              myio            = data_handler,
+                              max_epochs      = parser.max_epochs,
+                              save_path       = save_path,
+                              lr              = parser.lr,
+                              pct_start       = parser.pct_start,
+                              anneal_strategy = parser.anneal_strategy,
+                              log_int         = parser.log_int,
+                              buffer_break    = not parser.no_early_stop,
+                              break_int       = parser.patience,
+                              accumulate_int  = parser.grad_accum,
+                              max_grad_norm   = parser.max_grad_norm,
+                              batch_size      = parser.batch_size
                               )
             
     # train model

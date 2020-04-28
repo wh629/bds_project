@@ -33,6 +33,7 @@ class Learner():
                  accumulate_int=1,          # interval for accumulating gradients
                  max_grad_norm=1,           # maximum gradient norm
                  n_others=0,                # number of other statistics
+                 batch_size=8,              # batch size
                  ):
         """
         Class for learning
@@ -53,6 +54,7 @@ class Learner():
         self.accum_int = accumulate_int
         self.max_grad_norm = max_grad_norm
         self.n_others = n_others
+        self.batch_size = batch_size
         
         # for multi-gpu
         if torch.cuda.is_avalailable() and torch.cuda.device_count() > 1 and not isinstance(self.model, nn.DataParallel):
@@ -167,12 +169,6 @@ class Learner():
         
         log.info(logging_string)
     
-    def move_list_to_device(self, data):
-        result = []
-        for element in data:
-            result.append(element.to(self.device))
-        return result
-    
     def pack_inputs(self, reviews, data, labels):
         """
         TO DO: Pack inputs
@@ -225,7 +221,7 @@ class Learner():
         self.model.train()
         
         # send data and labels to device
-        data = self.move_list_to_device(data)
+        data = data.to(self.device)
         reviews = reviews.to(self.device)
         labels = labels.to(self.device)
         input_data = self.pack_inputs(reviews, data, labels)
@@ -301,7 +297,7 @@ class Learner():
         with torch.no_grad():
             for i, (reviews, data, labels) in enumerate(data_loader):
                 # send data and labels to device
-                data = self.move_list_to_device(data)
+                data = data.to(self.device)
                 reviews = reviews.to(self.device)
                 labels = labels.to(self.device)
                 input_data = self.pack_inputs(reviews, data, labels)
@@ -364,23 +360,24 @@ class Learner():
         val_data = self.IO.tasks[task_name]['dev']
         test_data = self.IO.tasks[task_name]['test']
         
+        # set max steps
+        self.max_steps = ((self.max_epochs*len(train_data.dataset))//self.batch_size)//self.accum_int
+        
         if scheduler == None:
             self.scheduler = opt.lr_scheduler.OneCycleLR(
                 self.optimizer,
                 max_lr=self.lr,
-                epochs=self.max_epochs,
-                steps_per_epoch=len(train_data.dataset),
+                total_steps=self.max_steps,
                 pct_start = self.pct_start,
                 anneal_strategy = self.anneal_strategy,
                 cycle_momentum = self.cycle_momentum
                 )
-        # set max steps
-        self.max_steps = (self.max_epochs*len(train_data.dataset))//self.accum_int
+        
         
         best = {
-            'val_loss'         : float("inf"),
-            'val_acc'          : 0.0,
-            'val_f1'           : 0.0,
+            'val_loss'     : float("inf"),
+            'val_acc'      : 0.0,
+            'val_f1'       : 0.0,
             'best_path'    : best_path,
             'best_step'    : 0,
             'total_steps'  : self.max_steps,
@@ -397,7 +394,7 @@ class Learner():
             
             # train
             for i, (reviews, data, labels) in enumerate(tqdm(train_data, desc='Epoch Iteration', mininterval=30)):
-                train_results, accumulated = self.train(i, accumulated, reviews, data, labels)
+                train_results, accumulated = self.train_step(i, accumulated, reviews, data, labels)
                 global_step += 1
             
             # evaluate every epoch
@@ -406,7 +403,7 @@ class Learner():
             # check for best validation score for each metric
             for result_type, result_val in val_results.items():                    
                 if ((result_val < best['val_{}'.format(result_type)] and result_type.find('loss') != -1)
-                    or result_val > best['val_{}'.format(result_type)]):
+                    or (result_val > best['val_{}'.format(result_type)] and result_type.find('loss')== -1)):
                         
                     # save best score
                     best['val_{}'.format(result_type)] = result_val
