@@ -171,7 +171,7 @@ class Learner():
     
     def pack_inputs(self, reviews, data, labels):
         """
-        TO DO: Pack inputs
+        Packs data into a dictionary for the model
         """
         if self.n_others > 0:
             others = data
@@ -325,7 +325,7 @@ class Learner():
 # =============================================================================
 
     def learn(self,
-              model_name,                 # name of model used
+              model_name = None,          # name of model used
               task_name = 'reviews_UIC',  # name of data set to use
               scheduler = None,           # learning rate scheduler
               verbose = True,             # flag whether to print checking
@@ -351,7 +351,8 @@ class Learner():
             }
         """
         
-        best_path = os.path.join(self.save_path, model_name + r'_best.pt')
+        best_path = os.path.join(self.save_path, model_name + '_best.pt')
+        best_rln_path = os.path.join(self.save_path, model_name + '_best_rln.pt')
         best_step = 0
         best_epoch = 0
         stop = False
@@ -413,10 +414,13 @@ class Learner():
                         # total model weights
                         if isinstance(self.model, nn.DataParallel):
                             save_state = self.model.module.state_dict()
+                            save_rln_state = self.model.module.representation.state_dict()
                         else:
                             save_state = self.model.state_dict()
+                            save_rln_state = self.model.representation.state_dict()
                         
                         torch.save(save_state, best_path)
+                        torch.save(save_rln_state, best_rln_path)
                         best_step = global_step
                         best_epoch = epoch
                     
@@ -455,7 +459,7 @@ class Learner():
             self.model.module.load_state_dict(torch.load(best_path))
         else:
             self.model.load_state_dict(torch.load(best_path))
-        test_results = self.evaluate(self.test_data, val=False)
+        test_results = self.evaluate(test_data, val=False)
         self.log_results(test_results,
                          log_type = 'Testing'
                          )
