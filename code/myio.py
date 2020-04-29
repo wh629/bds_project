@@ -184,7 +184,7 @@ class IO:
                     other_data.append([False])
                 
                 reviews.append(review)
-                labels.append(entry[self.label_name])
+                labels.append(int(entry[self.label_name]))
             except:
                 skipped.append(i)
         
