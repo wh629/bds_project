@@ -47,19 +47,8 @@ class Model(nn.Module):
                 other_data=None,
                 labels=None,
                 ):
-        
-        # get shape of data
-        batch_size, length = reviews.size()
-        
-        # generate position ids of tokens
-        positions = torch.arange(length)        
-        position_ids = positions.repeat(batch_size,1)
-        
         # pass through embedding network
-        embeddings = self.representation(
-                reviews,
-                position_ids=position_ids
-                )[0]
+        embeddings = self.representation(reviews)[0]
         
         # get [CLS] embedding
         cls_embeddings = embeddings[:,0,:]
