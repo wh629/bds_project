@@ -48,6 +48,9 @@ class Learner():
         self.optimizer = optimizer
         self.lr = lr
         self.weight_decay = weight_decay
+        self.pct_start = pct_start
+        self.anneal_strategy = anneal_strategy
+        self.cycle_momentum = cycle_momentum
         self.buffer_break = buffer_break
         self.break_int = break_int
         self.f1_avg = f1_average
@@ -57,7 +60,7 @@ class Learner():
         self.batch_size = batch_size
         
         # for multi-gpu
-        if torch.cuda.is_avalailable() and torch.cuda.device_count() > 1 and not isinstance(self.model, nn.DataParallel):
+        if torch.cuda.is_available() and torch.cuda.device_count() > 1 and not isinstance(self.model, nn.DataParallel):
             self.model = nn.DataParallel(self.model)
             self.model.to(self.device)
             
