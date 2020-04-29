@@ -165,11 +165,11 @@ class IO:
             for content_label in self.content:
                 others = []
                 if content_label == self.review_key:
-                    review = self.tokenizer.encode(entry[content_label],
+                    review = self.tokenizer.encode(entry[content_label].item(),
                                            add_special_tokens=True,
                                            max_length=self.max_length)
                 else:
-                    others.append(entry[content_label])
+                    others.append(entry[content_label].item())
 
             # add review and labels to lists
             if len(self.content)>1:
@@ -180,7 +180,7 @@ class IO:
                 other_data.append([False])
             
             reviews.append(review)
-            labels.append(entry[self.label_name])
+            labels.append(entry[self.label_name].item())
 
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)

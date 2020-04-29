@@ -58,12 +58,7 @@ def main():
         torch.cuda.manual_seed_all(parser.seed)
     
     # set data directory
-    if os.path.isdir(parser.data_dir):
-        data_path = parser.data_dir
-    else:
-        data_path = os.path.join(wd, parser.data_dir)
-    
-    log.info("Data Directory is {}.".format(data_path))
+    log.info("Data Directory is {}.".format(parser.data_dir))
     
 # =============================================================================
 #     import data
@@ -72,14 +67,14 @@ def main():
     content_headers = parser.content.split(',')
     tokenizer = transformers.AutoTokenizer.from_pretrained(parser.model,
                                                            do_lower_case=parser.do_lower_case)
-    data_handler = myio.IO(data_dir    = data_path,
+    data_handler = myio.IO(data_dir    = parser.data_dir,
                            model_name  = parser.model,
                            task_names  = task_names,
                            tokenizer   = tokenizer,
                            max_length  = parser.input_length,
                            content     = content_headers,
-                           label_name  = parser.label_name,
                            review_key  = parser.review_key,
+                           label_name  = parser.label_name,
                            val_split   = parser.val_split,
                            test_split  = parser.test_split,
                            batch_size  = parser.batch_size,
@@ -107,12 +102,8 @@ def main():
 #     define trainer
 # =============================================================================
     
-    if os.path.isdir(parser.save_dir):
-        save_path = parser.save_dir
-    else:
-        save_path = os.path.join(wd, parser.save_dir)
-    
-    log.info("Save Directory is {}.".format(save_path))
+        
+    log.info("Save Directory is {}.".format(parser.save_dir))
     log.info("="*40 + " Defining Trainer " + "="*40)
     
     # create trainer object
@@ -120,7 +111,7 @@ def main():
                               device          = device,
                               myio            = data_handler,
                               max_epochs      = parser.max_epochs,
-                              save_path       = save_path,
+                              save_path       = parser.save_dir,
                               lr              = parser.lr,
                               weight_decay    = parser.weight_decay,
                               pct_start       = parser.pct_start,
