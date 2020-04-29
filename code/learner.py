@@ -247,7 +247,7 @@ class Learner():
         accumulated += 1
         
         #take a step in optimizer and scheduler
-        if accumulated == self.accumulate_int:
+        if accumulated == self.accum_int:
             nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
             
             self.optimizer.step()   
