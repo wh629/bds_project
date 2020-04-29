@@ -162,27 +162,35 @@ class IO:
         input_data_df = pd.read_csv(os.path.join(self.data_dir,"{}.csv".format(file_name)))
 
         # for each review
+        skipped = []
         for i, entry in tqdm(input_data_df.iterrows(), desc = 'Data Loading'):
-            for content_label in self.content:
-                others = []
-                if content_label == self.review_key:
-                    review = self.tokenizer.encode(entry[content_label],
-                                           add_special_tokens=True,
-                                           max_length=self.max_length)
-                else:
-                    others.append(entry[content_label])
-
-            # add review and labels to lists
-            if len(self.content)>1:
-                # if there are other statistics than just reviews
-                other_data.append(others)
-            else:
-                # if only using reviews
-                other_data.append([False])
             
-            reviews.append(review)
-            labels.append(entry[self.label_name])
-
+            try:
+                for content_label in self.content:
+                    others = []
+                    if content_label == self.review_key:
+                        review = self.tokenizer.encode(entry[content_label],
+                                               add_special_tokens=True,
+                                               max_length=self.max_length)
+                    else:
+                        others.append(entry[content_label])
+    
+                # add review and labels to lists
+                if len(self.content)>1:
+                    # if there are other statistics than just reviews
+                    other_data.append(others)
+                else:
+                    # if only using reviews
+                    other_data.append([False])
+                
+                reviews.append(review)
+                labels.append(entry[self.label_name])
+            except:
+                skipped.append(i)
+        
+        log.info("Skipped {} examples because of encoding errors. Indices: {}".format(
+            len(skipped), skipped))
+        
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)
 
