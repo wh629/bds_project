@@ -45,8 +45,12 @@ class IO:
         
         for task in task_names:
             self.tasks[task] = None
-
-        self.cache_dir = os.path.join(data_dir, model_name, 'cached')
+        
+        cache_dir_pre = os.path.join(data_dir,'cached')
+        if not os.path.exists(cache_dir_pre):
+            os.mkdir(cache_dir_pre)
+        
+        self.cache_dir = os.path.join(cache_dir_pre, model_name)
         if not os.path.exists(self.cache_dir):
             os.mkdir(self.cache_dir)
     """
