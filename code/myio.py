@@ -4,6 +4,7 @@ Module with class io containing methods for importing and exporting data
 
 import logging as log
 import math
+from tqdm import tqdm
 import os
 import pandas as pd
 import torch
@@ -161,15 +162,15 @@ class IO:
         input_data_df = pd.read_csv(os.path.join(self.data_dir,"{}.csv".format(file_name)))
 
         # for each review
-        for i, entry in input_data_df.iterrows():
+        for i, entry in tqdm(input_data_df.iterrows(), desc = 'Data Loading'):
             for content_label in self.content:
                 others = []
                 if content_label == self.review_key:
-                    review = self.tokenizer.encode(entry[content_label].item(),
+                    review = self.tokenizer.encode(entry[content_label],
                                            add_special_tokens=True,
                                            max_length=self.max_length)
                 else:
-                    others.append(entry[content_label].item())
+                    others.append(entry[content_label])
 
             # add review and labels to lists
             if len(self.content)>1:
@@ -180,7 +181,7 @@ class IO:
                 other_data.append([False])
             
             reviews.append(review)
-            labels.append(entry[self.label_name].item())
+            labels.append(entry[self.label_name])
 
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)
