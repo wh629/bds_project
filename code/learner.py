@@ -292,8 +292,7 @@ class Learner():
             }
         """
         if val:
-            log.info('Validation | Step {} out of {}'\
-                     .format(iteration+1, self.max_steps+1))
+            log.info('Validation | Step {}'.format(iteration+1, self.max_steps+1))
         
         metrics = {
             "loss"      : 0,
