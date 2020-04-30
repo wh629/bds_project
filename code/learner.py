@@ -253,6 +253,8 @@ class Learner():
             self.optimizer.step()   
             self.scheduler.step()
             
+            log.info("Step with accumulated {}".format(accumulated))
+            
             accumulated = 0
             
             self.model.zero_grad()
@@ -364,7 +366,7 @@ class Learner():
         test_data = self.IO.tasks[task_name]['test']
         
         # set max steps
-        self.max_steps = ((self.max_epochs*len(train_data.dataset))//self.batch_size + 1)//self.accum_int
+        self.max_steps = self.max_epochs*(len(train_data.dataset)//self.batch_size+1)//self.accum_int)
         
         if scheduler == None:
             self.scheduler = opt.lr_scheduler.OneCycleLR(
@@ -391,7 +393,7 @@ class Learner():
         accumulated = 0
         
         log.info('='*40 + ' Start Training ' + '='*40)
-        log.info('='*40 + ' Max {} Epochs, Max {} Steps'.format(self.max_epochs, self.max_steps) + '='*40)
+        log.info('='*40 + ' Max {} Epochs, ~ Max {} Steps'.format(self.max_epochs, self.max_steps) + '='*40)
         log.info('='*40 + ' Using {} GPUs with {} Accumulation Steps'.format(torch.cuda.device_count(), self.accum_int) + '='*40)
         for epoch in trange(0, int(self.max_epochs), desc = 'Epoch', mininterval = 30):
             
