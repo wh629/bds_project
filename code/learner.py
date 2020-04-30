@@ -305,7 +305,8 @@ class Learner():
         
         # don't need to track gradient
         with torch.no_grad():
-            for i, (reviews, data, labels) in enumerate(data_loader):
+            iterator = tqdm(data_loader, desc="Evaluation", mininterval=30)
+            for i, (reviews, data, labels) in enumerate(iterator):
                 # send data and labels to device
                 data = data.to(self.device)
                 reviews = reviews.to(self.device)
