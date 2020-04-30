@@ -35,9 +35,9 @@ args.add_argument('--batch_size', type=int, default=8,
                   help='batch size')
 args.add_argument('--input_length', type=int, default=512,
                   help='longest length of a token')
-args.add_argument('--val_split', type=float, default=0.1,
+args.add_argument('--val_split', type=float, default=0.001,
                   help='percent of data used for validation as decimal')
-args.add_argument('--test_split', type=float, default=0.1,
+args.add_argument('--test_split', type=float, default=0.001,
                   help='percent of data used for test as decimal')
 args.add_argument('--do_lower_case', action='store_true',
                   help='whether to do lower case for tokenizer')
