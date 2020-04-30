@@ -21,16 +21,18 @@ def make_command(dataset, model, max_length, lr, bs, max_epochs, seed, gpu_capac
     
     if accumulate:
         accumulation = int(numpy.ceil(bs / gpu_capacity))
+        bs_fill = gpu_capacity
     else:
         accumulation = 1
-    
+        bs_fill = bs
+
     command = (
         f'{os.path.join(repo_dir, "code", "main.py")} '
         f"--exp_name {exp_name} "
         f"--data_name {dataset} "
         f"--input_length {max_length} "
         f"--model {model} "
-        f"--batch_size {bs} "
+        f"--batch_size {bs_fill} "
         f"--grad_accum {accumulation} "
         f"--lr {lr} "
         f"--max_epochs {max_epochs} "

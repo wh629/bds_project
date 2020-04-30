@@ -12,7 +12,7 @@ TRIALS=1
 DATA=reviews_UIC
 MODEL=roberta-large
 LENGTH=512
-CAPACITY=8
+CAPACITY=2
 
 python hyper_parameter_tuning.py \
 	--user ${NETID} \
@@ -20,5 +20,5 @@ python hyper_parameter_tuning.py \
 	--dataset ${DATA} \
 	--model ${MODEL} \
 	--gpu-capacity ${CAPACITY} \
-	--max_length ${LENGTH} #\
-	#--accumulate
+	--max_length ${LENGTH} \
+	--accumulate
