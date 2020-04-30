@@ -69,6 +69,7 @@ class Model(nn.Module):
             loss = self.loss(logits, labels)
         except:
             log.info("Failed loss calculation. Logits shape is {}".format(logits.shape))
+            log.info("Review shape is {}".format(reviews.shape))
             log.info("Logits {}".format(logits))
             log.info("Labels {}".format(labels))
         
