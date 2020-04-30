@@ -159,8 +159,8 @@ class Learner():
         
         # make sure logging is valid
         assert log_type in ['Training', 'Validation', 'Testing'], 'Learner logging type {} not supported'.format(log_type)
-        assert log_type == 'Training' and not type(epoch) is None, 'Need integer epoch with log_type "Training".'
-        assert log_type == 'Validation' and (type(early_check) == str and not type(epoch) is None), 'Need string early_check and integer epoch with log_type "Validation".'
+        assert log_type == 'Training' and type(epoch) == int, 'Need integer step with log_type "Training". Got {}.'.format(type(epoch))
+        assert log_type == 'Validation' and (type(early_check) == str and type(epoch) == int), 'Need string early_check and integer step with log_type "Validation". Got early_check {} and step {}.'.format(type(early_check), type(epoch))
         
         # build string for logging
         logging_string = '{} Information: | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f}'.format(
