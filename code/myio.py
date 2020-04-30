@@ -21,8 +21,8 @@ class IO:
                  content=['reviewContent'],         # col name of review text
                  review_key='reviewContent',        # key for reviews
                  label_name='flagged',              # list of label col names
-                 val_split=0.1,                     # percent of data for validation
-                 test_split=0.1,                    # percent of data for test
+                 val_split=0.001,                   # percent of data for validation
+                 test_split=0.001,                  # percent of data for test
                  batch_size=32,                     # batch size for training
                  shuffle=True,                      # whether to shuffle train sampling
                  cache=True,                        # whether to cache data if reading for first time
@@ -125,18 +125,22 @@ class IO:
                 log.info('Loading {} from cached file: {}'.format(
                     task, cache_file))
                 loaded = torch.load(cache_file)
-                train_set, val_set, test_set = (
-                                                    loaded['train'],
-                                                    loaded['dev'],
-                                                    loaded['test']
-                                                )
+                dataset = loaded['data']
             else:
-                train_set, val_set, test_set = self.read_from_csv(task)
+                dataset = self.read_from_csv(task)
                 
                 if self.cache:
                     log.info('Saving {} processed data into cached file: {}'.format(task, cache_file))
-                    torch.save({'train' : train_set, 'dev' : val_set, 'test' : test_set}, cache_file)
-
+                    torch.save({'data' : dataset}, cache_file)
+            
+            # split to train and validation sets with `self.val_split` and `self.test_split`
+            val_size = int(len(dataset) * self.val_split)
+            test_size = int(len(dataset) * self.test_split)
+            train_size = len(dataset) - val_size - test_size
+            
+            train_set, val_set, test_set = torch.utils.data.random_split(dataset,
+                                                                         [train_size, val_size, test_size])
+            
             # create DataLoader object. Shuffle for training.
             task_data['train'] = DataLoader(dataset=train_set,
                                              batch_size=self.batch_size,
@@ -193,11 +197,5 @@ class IO:
         
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)
-
-        # split to train and validation sets with `self.val_split` and `self.test_split`
-        val_size = int(len(dataset) * self.val_split)
-        test_size = int(len(dataset) * self.test_split)
-        train_size = len(dataset) - val_size - test_size
-
-        return torch.utils.data.random_split(dataset,
-                                                [train_size, val_size, test_size])
+        
+        return dataset
