@@ -366,7 +366,7 @@ class Learner():
         test_data = self.IO.tasks[task_name]['test']
         
         # set max steps
-        self.max_steps = self.max_epochs*(len(train_data.dataset)//self.batch_size+1)//self.accum_int)
+        self.max_steps = self.max_epochs*((len(train_data.dataset)//self.batch_size+1)//self.accum_int)
         
         if scheduler == None:
             self.scheduler = opt.lr_scheduler.OneCycleLR(
