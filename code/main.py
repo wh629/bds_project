@@ -124,12 +124,15 @@ def main():
                               max_grad_norm   = parser.max_grad_norm,
                               n_others        = parser.n_others,
                               batch_size      = parser.batch_size,
+                              check_int       = parser.check_int,
+                              save            = parser.save,
+                              test            = parser.test,
                               )
             
     # train model
     best = trainer.learn(model_name  = parser.model,
                          task_name   = task_names[0],
-                         early_check = parser.early_stop_criteria
+                         early_check = parser.early_check
                          )
     
     best['experiment'] = parser.exp_name

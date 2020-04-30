@@ -73,9 +73,7 @@ args.add_argument('--max_epochs', type=int, default=10,
 args.add_argument('--lr', type=float, default=0.00003,
                   help='initial learning rate')
 args.add_argument('--patience', type=int, default=5,
-                  help='number of epochs without improvement before early stopping')
-args.add_argument('--early_check', type=str, default='f1',
-                  help='evaluation metric to check for early stopping')
+                  help='number of check intervals without improvement before early stopping')
 args.add_argument('--no_early_stop', action='store_true',
                   help='boolean whether to use early stopping')
 args.add_argument('--grad_accum', type=int, default=1,
@@ -91,8 +89,14 @@ args.add_argument('--cycle_momentum', action='store_true',
 args.add_argument('--anneal_strategy', type=str, default='linear',
                   help='annealing strategy. default is linear.',
                   choices={'linear', 'cos'})
-args.add_argument('--log_int', type=int, default=1,
-                  help='number of epochs for logging information')
-args.add_argument('--early_stop_criteria', type=str, default='loss',
+args.add_argument('--early_check', type=str, default='f1',
                   help='early stopping criteria',
                   choices={'loss', 'acc', 'f1'})
+args.add_argument('--log_int', type=int, default=100,
+                  help='number of iterations for logging information')
+args.add_argument('--check_int', type=int, default=1000,
+                  help='number of iterations between checks')
+args.add_argument('--save', action='store_true',
+                  help='whether to save model weights')
+args.add_argument('--test', action='store_true',
+                  help='whether to test model on test set')
