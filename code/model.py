@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import transformers
 import os
+import logging as log
 
 class Model(nn.Module):
     """
@@ -64,7 +65,12 @@ class Model(nn.Module):
         logits = self.flag(inputs)
         
         # compute loss
-        loss = self.loss(logits, labels)
+        try:
+            loss = self.loss(logits, labels)
+        except:
+            log.info("Failed loss calculation. Logits shape is {}".format(logits.shape))
+            log.info("Logits {}".format(logits))
+            log.info("Labels {}".format(labels))
         
         return loss, logits
         
