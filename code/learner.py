@@ -450,7 +450,7 @@ class Learner():
                             
                         elif (result_type == early_check):
                             no_improve += 1
-                            log.info("No Improvement Counter {} out of {}".format(no_improve, self.break_int))
+                            log.info("No Improvement of {} Counter {} out of {}".format(result_type, no_improve, self.break_int))
                             # check if early breaking requirements satisfied
                             if (no_improve >= self.break_int and self.buffer_break):
                                 stop = True
