@@ -159,8 +159,8 @@ class Learner():
         
         # make sure logging is valid
         assert log_type in ['Training', 'Validation', 'Testing'], 'Learner logging type {} not supported'.format(log_type)
-        assert log_type == 'Training' and type(epoch) == int, 'Need integer epoch with log_type "Training".'
-        assert log_type == 'Validation' and (type(early_check) == str and type(epoch) == int), 'Need string early_check and integer epoch with log_type "Validation".'
+        assert log_type == 'Training' and not type(epoch) is None, 'Need integer epoch with log_type "Training".'
+        assert log_type == 'Validation' and (type(early_check) == str and not type(epoch) is None), 'Need string early_check and integer epoch with log_type "Validation".'
         
         # build string for logging
         logging_string = '{} Information: | Loss: {:.4f} | Accuracy: {:.4f} | F1: {:.4f}'.format(
@@ -170,9 +170,9 @@ class Learner():
             results['f1'])
         
         if log_type == 'Training':
-            logging_string += ' | Current Epoch: {}'.format(epoch)
+            logging_string += ' | Current Step: {}'.format(epoch)
         elif log_type == 'Validation':
-            logging_string += ' | Best Epoch: {} | Stop Check Type: {}'.format(
+            logging_string += ' | Best Step: {} | Stop Check Type: {}'.format(
                 epoch,
                 early_check
                 )
@@ -364,7 +364,6 @@ class Learner():
         
         best_path = os.path.join(self.save_path, model_name + '_best.pt')
         best_rln_path = os.path.join(self.save_path, model_name + '_best_rln.pt')
-        best_epoch = 0
         stop = False
         
         train_data = self.IO.tasks[task_name]['train']
@@ -405,6 +404,7 @@ class Learner():
         global_step = 0
         accumulated = 0
         no_improve = 0
+        checked = True
         
         log.info('='*40 + ' Start Training ' + '='*40)
         log.info('='*40 + ' Max {} Epochs, ~ Max {} Steps'.format(self.max_epochs, self.max_steps) + '='*40)
@@ -416,8 +416,10 @@ class Learner():
                 
                 if accumulated == 0:
                     global_step += 1
+                    checked = False
                 
-                if global_step % self.check_int == 0:
+                if global_step % self.check_int == 0 and not checked:
+                    checked = True
                     # evaluate every epoch
                     val_results = self.evaluate(val_data, iteration=global_step)
                         
@@ -444,7 +446,6 @@ class Learner():
                                     torch.save(save_rln_state, best_rln_path)
                                     
                                 best['best_step'] = global_step
-                                best_epoch = epoch
                                 no_improve = 0
                             
                         elif (result_type == early_check):
@@ -464,19 +465,19 @@ class Learner():
             if epoch % self.log_int == 0 and verbose:
                 self.log_results(train_results,
                                  log_type = 'Training',
-                                 epoch = epoch
+                                 epoch = global_step
                                  )
                 self.log_results(best,
                                  log_type = 'Validation',
                                  early_check = early_check,
-                                 epoch = best_epoch
+                                 epoch = best['best_step']
                                  )
         
         # log best validation results
         self.log_results(best,
                          log_type = 'Validation',
                          early_check = early_check,
-                         epoch = best_epoch
+                         epoch = best['best_step']
                          )
         
         if self.test:
