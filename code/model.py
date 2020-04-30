@@ -48,13 +48,15 @@ class Model(nn.Module):
                 other_data=None,
                 labels=None,
                 ):
+        bs, length = reviews.shape
+        
         # pass through embedding network
         embeddings = self.representation(reviews)[0]
         
         # get [CLS] embedding
         cls_embeddings = embeddings[:,0,:]
         
-        cls_embeddings = torch.squeeze(cls_embeddings)
+        cls_embeddings = cls_embeddings.view(bs,-1)
         
         if other_data is None:
             inputs = cls_embeddings
