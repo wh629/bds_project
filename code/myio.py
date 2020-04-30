@@ -125,22 +125,18 @@ class IO:
                 log.info('Loading {} from cached file: {}'.format(
                     task, cache_file))
                 loaded = torch.load(cache_file)
-                dataset = loaded['data']
+                train_set, val_set, test_set = (
+                                                    loaded['train'],
+                                                    loaded['dev'],
+                                                    loaded['test']
+                                                )
             else:
-                dataset = self.read_from_csv(task)
+                train_set, val_set, test_set = self.read_from_csv(task)
                 
                 if self.cache:
                     log.info('Saving {} processed data into cached file: {}'.format(task, cache_file))
-                    torch.save({'data' : dataset}, cache_file)
-            
-            # split to train and validation sets with `self.val_split` and `self.test_split`
-            val_size = int(len(dataset) * self.val_split)
-            test_size = int(len(dataset) * self.test_split)
-            train_size = len(dataset) - val_size - test_size
-            
-            train_set, val_set, test_set = torch.utils.data.random_split(dataset,
-                                                                         [train_size, val_size, test_size])
-            
+                    torch.save({'train' : train_set, 'dev' : val_set, 'test' : test_set}, cache_file)
+
             # create DataLoader object. Shuffle for training.
             task_data['train'] = DataLoader(dataset=train_set,
                                              batch_size=self.batch_size,
@@ -197,5 +193,11 @@ class IO:
         
         # create a dataset object for the dataloader
         dataset = UICDataset.UICDataset(reviews, other_data, labels)
-        
-        return dataset
+
+        # split to train and validation sets with `self.val_split` and `self.test_split`
+        val_size = int(len(dataset) * self.val_split)
+        test_size = int(len(dataset) * self.test_split)
+        train_size = len(dataset) - val_size - test_size
+
+        return torch.utils.data.random_split(dataset,
+                                                [train_size, val_size, test_size])
