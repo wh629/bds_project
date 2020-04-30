@@ -11,7 +11,7 @@ from shared_settings import make_command
 def select_candidates(dataset):
     lr_candidates = [1e-5, 3e-5, 5e-5]
     bs_candidates = [8, 16, 32]
-    max_epochs_candidates = [10, 20, 40]
+    max_epochs_candidates = [1, 2]
     seed_range = 1e6
     lr = lr_candidates[random.randrange(0, len(lr_candidates), 1)]
     bs = bs_candidates[random.randrange(0, len(bs_candidates), 1)]
@@ -38,7 +38,9 @@ def submit_trials(args):
             args.gpu_capacity,
             args.data_dir,
             args.results_dir,
-            args.accumulate
+            args.accumulate,
+            args.check_int,
+            args.log_int,
         )
         sbatch_file = os.path.join(args.repo_dir, "experiment_scripts", f"{args.user}.sbatch")
         jobs.append(f'COMMAND="{command}" sbatch {sbatch_file}\n')
@@ -87,7 +89,9 @@ if __name__ == "__main__":
     )
     
     parser.add_argument("--max_length", type=int, default=512)
-    parser.add_argument("--gpu-capacity", type=int, default=8)
+    parser.add_argument("--gpu-capacity", type=int, default=2)
+    parser.add_argument('--check_int', type=int, default=1000)
+    parser.add_argument('--log_int',type=int, default=100)
     parser.add_argument("--accumulate", action='store_true')
 
     args = parser.parse_args()

@@ -15,7 +15,20 @@ def decode_exp_name(exp_name):
     return dataset, model, lr, bs, max_epochs, seed
 
 
-def make_command(dataset, model, max_length, lr, bs, max_epochs, seed, gpu_capacity, data_dir, results_dir, accumulate):
+def make_command(dataset,
+                 model,
+                 max_length,
+                 lr,
+                 bs,
+                 max_epochs,
+                 seed,
+                 gpu_capacity,
+                 data_dir,
+                 results_dir,
+                 accumulate,
+                 check_int,
+                 log_int,
+                 ):
 
     exp_name = f"{encode_exp_name(dataset, model, max_length, lr, bs, max_epochs, seed)}"
     
@@ -36,6 +49,8 @@ def make_command(dataset, model, max_length, lr, bs, max_epochs, seed, gpu_capac
         f"--max_epochs {max_epochs} "
         f"--data_dir {data_dir} "
         f"--save_dir {results_dir} "
+        f"--check_int {check_int} "
+        f"--log_int {log_int}"
     )
 
     return command
