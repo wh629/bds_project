@@ -138,10 +138,10 @@ def main():
     best['experiment'] = parser.exp_name
         
     #write results to "results.jsonl"
-    if not os.path.exists(parser.results_dir):
-        os.mkdir(parser.results_dir)
+    if not os.path.exists(parser.save_dir):
+        os.mkdir(parser.save_dir)
     
-    results_name = os.path.join(parser.results_dir, "results.jsonl")
+    results_name = os.path.join(parser.save_dir, "results.jsonl")
     with open(results_name, 'a') as f:
         f.write(json.dumps(best)+"\n")
     
