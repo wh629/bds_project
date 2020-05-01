@@ -28,6 +28,8 @@ def make_command(dataset,
                  accumulate,
                  check_int,
                  log_int,
+                 patience,
+                 early_check,
                  ):
 
     exp_name = f"{encode_exp_name(dataset, model, max_length, lr, bs, max_epochs, seed)}"
@@ -52,7 +54,9 @@ def make_command(dataset,
         f"--data_dir {data_dir} "
         f"--save_dir {results_dir} "
         f"--check_int {check_int} "
-        f"--log_int {log_int}"
+        f"--log_int {log_int} "
+        f"--patience {patience}"
+        f"--early_check {early_check} "
     )
 
     return command

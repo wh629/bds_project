@@ -50,7 +50,7 @@ args.add_argument('--model', type=str, default='bert-base-uncased',
                            'roberta-base',
                            'roberta-large',
                            'albert-base-v2',
-                           'albert-xxlarge-v2'
+                           'albert-xxlarge-v2',
                            'albert-base-v1',
                            'albert-xxlarge-v1'
                            })
