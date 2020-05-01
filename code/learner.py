@@ -343,7 +343,6 @@ class Learner():
               model_name = None,          # name of model used
               task_name = 'reviews_UIC',  # name of data set to use
               scheduler = None,           # learning rate scheduler
-              verbose = True,             # flag whether to print checking
               early_check = 'loss'        # key for early break check
               ):
         """
@@ -408,7 +407,8 @@ class Learner():
         global_step = 0
         accumulated = 0
         no_improve = 0
-        checked = True
+        checked = False
+        logged = False
         
         log.info('='*40 + ' Start Training ' + '='*40)
         log.info('='*40 + ' Max {} Epochs, ~ Max {} Steps'.format(self.max_epochs, self.max_steps) + '='*40)
@@ -421,6 +421,7 @@ class Learner():
                 if accumulated == 0:
                     global_step += 1
                     checked = False
+                    logged = False
                 
                 if global_step % self.check_int == 0 and not checked:
                     checked = True
@@ -468,7 +469,8 @@ class Learner():
                                 log.info('='*40 + ' Early Stop at step: {} '.format(global_step) + '='*40)
                 
                 # log results every interval
-                if global_step % self.log_int == 0 and verbose:
+                if global_step % self.log_int == 0 and not logged:
+                    logged = True
                     self.log_results(train_results,
                                      log_type = 'Training',
                                      epoch = global_step
