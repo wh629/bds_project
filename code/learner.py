@@ -271,7 +271,7 @@ class Learner():
             
         # accumulate metrics
         self.accumulate_metrics(metrics,
-                                l,
+                                l.item(),
                                 logits,
                                 labels)
         
@@ -326,7 +326,7 @@ class Learner():
                 
                 # accumulate metrics
                 self.accumulate_metrics(metrics,
-                                        l,
+                                        l.item(),
                                         logits,
                                         labels)
         
