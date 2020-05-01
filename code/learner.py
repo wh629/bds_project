@@ -151,7 +151,8 @@ class Learner():
                     results,
                     log_type,
                     early_check = None,
-                    epoch = None
+                    epoch = None,
+                    best = None,
                     ):
         """
         Helper method for logging information
@@ -172,7 +173,10 @@ class Learner():
         if log_type == 'Training':
             logging_string += ' | Current Step: {}'.format(epoch)
         elif log_type == 'Validation':
-            logging_string += ' | Best Step: {} | Stop Check Type: {}'.format(
+            logging_string += ' | Best Loss: {:.4f} | Best Accuracy: {:.4f} | Best F1: {:.4f} | Best Step: {} | Stop Check Type: {}'.format(
+                best['val_loss'],
+                best['val_acc'],
+                best['val_f1'],
                 epoch,
                 early_check
                 )
@@ -422,7 +426,14 @@ class Learner():
                     checked = True
                     # evaluate every epoch
                     val_results = self.evaluate(val_data, iteration=global_step)
-                        
+                    
+                    self.log_results(val_results,
+                                     log_type = 'Validation',
+                                     early_check = early_check,
+                                     epoch = best['best_step'],
+                                     best = best,
+                                     )
+
                     # check for best validation score for each metric
                     for result_type, result_val in val_results.items():                    
                         if ((result_val < best['val_{}'.format(result_type)] and result_type.find('loss') != -1)
@@ -462,10 +473,11 @@ class Learner():
                                      log_type = 'Training',
                                      epoch = global_step
                                      )
-                    self.log_results(best,
+                    self.log_results(val_results,
                                      log_type = 'Validation',
                                      early_check = early_check,
-                                     epoch = best['best_step']
+                                     epoch = best['best_step'],
+                                     best = best,
                                      )
                 if stop:
                     # early stop
@@ -475,10 +487,11 @@ class Learner():
                 break
         
         # log best validation results
-        self.log_results(best,
+        self.log_results(val_results,
                          log_type = 'Validation',
                          early_check = early_check,
-                         epoch = best['best_step']
+                         epoch = best['best_step'],
+                         best = best,
                          )
         
         if self.test:
