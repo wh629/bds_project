@@ -8,13 +8,15 @@ PROJECT=/scratch/wh629/bds/project
 export BDS_DATA_DIR=${PROJECT}/data
 export BDS_RESULTS_DIR=${PROJECT}/results
 NETID=wh629
-TRIALS=1
+TRIALS=20
 DATA=reviews_UIC
 MODEL=roberta-large # 'bert-base-uncased', 'bert-large-uncased', 'roberta-base', 'roberta-large', 'albert-base-v2', 'albert-xxlarge-v2', 'albert-base-v1', 'albert-xxlarge-v1'
 LENGTH=512
 CAPACITY=2
-PATIENCE=5
-EARLY=f1 # loss, acc, or f1
+PATIENCE=10
+EARLY=acc # loss, acc, or f1
+CHECK=1000
+LOG=100
 
 python hyper_parameter_tuning.py \
 	--user ${NETID} \
@@ -25,4 +27,6 @@ python hyper_parameter_tuning.py \
 	--max_length ${LENGTH} \
 	--patience ${PATIENCE} \
 	--early_check ${EARLY} \
+	--check_int ${CHECK} \
+	--log_int ${LOG} \
 	--accumulate

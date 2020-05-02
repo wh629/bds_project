@@ -55,7 +55,7 @@ def make_command(dataset,
         f"--save_dir {results_dir} "
         f"--check_int {check_int} "
         f"--log_int {log_int} "
-        f"--patience {patience}"
+        f"--patience {patience} "
         f"--early_check {early_check} "
     )
 
