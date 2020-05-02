@@ -9,9 +9,9 @@ from shared_settings import make_command
 
 
 def select_candidates(dataset):
-    lr_candidates = [1e-5, 3e-5, 5e-5]
+    lr_candidates = [1e-5, 5e-6, 3e-5]
     bs_candidates = [8, 16]
-    max_epochs_candidates = [1, 2]
+    max_epochs_candidates = [1]
     seed_range = 1e6
     lr = lr_candidates[random.randrange(0, len(lr_candidates), 1)]
     bs = bs_candidates[random.randrange(0, len(bs_candidates), 1)]
