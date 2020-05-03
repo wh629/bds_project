@@ -11,3 +11,4 @@ dependencies:
     - matplotlib
     - pip:
         - transformers==2.3.0
+        - tqdm
