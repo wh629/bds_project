@@ -67,15 +67,15 @@ class Model(nn.Module):
         logits = self.flag(inputs)
         
         # compute loss
-        try:
-            loss = self.loss(logits, labels)
-        except:
-            log.info(f"embedding shape is {cls_embeddings.shape}")
-            log.info(f"inputs shape is {inputs.shape}")
-            log.info("Failed loss calculation. Logits shape is {}".format(logits.shape))
-            log.info("Review shape is {}".format(reviews.shape))
-            log.info("Logits {}".format(logits))
-            log.info("Labels {}".format(labels))
+        # try:
+        loss = self.loss(logits, labels)
+        # except:
+        #     log.info(f"embedding shape is {cls_embeddings.shape}")
+        #     log.info(f"inputs shape is {inputs.shape}")
+        #     log.info("Failed loss calculation. Logits shape is {}".format(logits.shape))
+        #     log.info("Review shape is {}".format(reviews.shape))
+        #     log.info("Logits {}".format(logits))
+        #     log.info("Labels {}".format(labels))
         
         return loss, logits
         
