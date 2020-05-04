@@ -61,7 +61,7 @@ class Model(nn.Module):
         if other_data is None:
             inputs = cls_embeddings
         else:
-            inputs = torch.cat((cls_embeddings,other_data), dim=1)
+            inputs = torch.cat((cls_embeddings, other_data.float()), dim=1)
         
         # compute fake review logits
         logits = self.flag(inputs)
