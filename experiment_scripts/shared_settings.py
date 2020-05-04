@@ -9,10 +9,10 @@ def encode_exp_name(dataset, model, max_length, lr, bs, max_epochs, seed):
 
 
 def decode_exp_name(exp_name):
-    dataset, model = exp_name.split("_")[:2]
-    max_length, lr, bs, max_epochs, seed = exp_name.split("_")[3::2]
+    dataset, dataset_second, model = exp_name.split("_")[:3]
+    max_length, lr, bs, max_epochs, seed = exp_name.split("_")[4::2]
     max_length, lr, bs, max_epochs, seed = int(max_length), float(lr), int(bs), int(max_epochs), int(seed)
-    return dataset, model, lr, bs, max_epochs, seed
+    return dataset+"_"+dataset_second, model, lr, bs, max_epochs, seed
 
 
 def make_command(dataset,
@@ -30,6 +30,8 @@ def make_command(dataset,
                  log_int,
                  patience,
                  early_check,
+                 additional,
+                 content,
                  ):
 
     exp_name = f"{encode_exp_name(dataset, model, max_length, lr, bs, max_epochs, seed)}"
@@ -58,5 +60,10 @@ def make_command(dataset,
         f"--patience {patience} "
         f"--early_check {early_check} "
     )
+
+    if additional:
+        n_other = int(len(content.split(','))-1)
+        command += (f"--content {content} "
+                    f"--n_others {n_other} ")
 
     return command

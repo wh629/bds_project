@@ -54,7 +54,7 @@ args.add_argument('--model', type=str, default='bert-base-uncased',
                            'albert-base-v1',
                            'albert-xxlarge-v1'
                            })
-args.add_argument('--n_labels', type=int, default=2,
+args.add_argument('--n_labels', type=int, default=1,
                   help='number of label types')
 args.add_argument('--n_others', type=int, default=0,
                   help='number of other statistics')
@@ -100,3 +100,5 @@ args.add_argument('--save', action='store_true',
                   help='whether to save model weights')
 args.add_argument('--test', action='store_true',
                   help='whether to test model on test set')
+
+args.add_argument('--debug', action='store_true')

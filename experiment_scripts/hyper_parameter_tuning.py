@@ -42,7 +42,9 @@ def submit_trials(args):
             args.check_int,
             args.log_int,
             args.patience,
-            args.early_check
+            args.early_check,
+            args.additional,
+            args.content,
         )
         sbatch_file = os.path.join(args.repo_dir, "experiment_scripts", f"{args.user}.sbatch")
         jobs.append(f'COMMAND="{command}" sbatch {sbatch_file}\n')
@@ -97,6 +99,9 @@ if __name__ == "__main__":
     parser.add_argument("--accumulate", action='store_true')
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--early_check', type=str, default='f1',help='early stopping criteria',choices={'loss', 'acc', 'f1'})
+
+    parser.add_argument('--additional', action='store_true', help='whether using additional information')
+    parser.add_argument('--content', type=str, default='reviewContent', help='contents separated by `,`')
 
     args = parser.parse_args()
     args.repo_dir = repo_dir

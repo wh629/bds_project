@@ -132,7 +132,8 @@ def main():
     # train model
     best = trainer.learn(model_name  = parser.model,
                          task_name   = task_names[0],
-                         early_check = parser.early_check
+                         early_check = parser.early_check,
+                         debug       = parser.debug,
                          )
     
     best['experiment'] = parser.exp_name

@@ -280,7 +280,8 @@ class Learner():
     def evaluate(self,
                  data_loader,      # dataloader to evaluate on
                  iteration = None, # integer of epoch number if val = True
-                 val = True        # boolean whether evaluating validation data
+                 val = True,       # boolean whether evaluating validation data
+                 debug = False,
                 ):
         """
         Evaluation model on data. (May need to use dataloader as well)
@@ -329,7 +330,11 @@ class Learner():
                                         l.item(),
                                         logits,
                                         labels)
-        
+
+                if i == 0 and debug:
+                    log.info('Debug')
+                    break
+
         # average metrics
         self.average_metrics(metrics, i+1)
         
@@ -343,7 +348,8 @@ class Learner():
               model_name = None,          # name of model used
               task_name = 'reviews_UIC',  # name of data set to use
               scheduler = None,           # learning rate scheduler
-              early_check = 'loss'        # key for early break check
+              early_check = 'loss',       # key for early break check
+              debug = False,
               ):
         """
         Train model
@@ -426,7 +432,7 @@ class Learner():
                 if global_step % self.check_int == 0 and not checked:
                     checked = True
                     # evaluate every epoch
-                    val_results = self.evaluate(val_data, iteration=global_step)
+                    val_results = self.evaluate(val_data, iteration=global_step, debug = debug)
                     
                     self.log_results(val_results,
                                      log_type = 'Validation',
@@ -502,7 +508,7 @@ class Learner():
                 self.model.module.load_state_dict(torch.load(best_path))
             else:
                 self.model.load_state_dict(torch.load(best_path))
-            test_results = self.evaluate(test_data, val=False)
+            test_results = self.evaluate(test_data, val=False, debug=debug)
             self.log_results(test_results,
                              log_type = 'Testing'
                              )
