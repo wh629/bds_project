@@ -22,16 +22,14 @@ def collect_results(args):
         "best_test_loss": [],
         "exp_name": [],
         "best_iter": [],
-        "current_iter": [],
         "total_iter": [],
         "total_epochs": [],
-        "early_stop": []
     }
 
     def record_exp(one_exp_result):
-        dataset, framing, lr, bs, max_epochs, seed = decode_exp_name(one_exp_result["exp_name"])
+        dataset, model, lr, bs, max_epochs, seed = decode_exp_name(one_exp_result["experiment"])
         results["dataset"].append(dataset)
-        results["framing"].append(framing)
+        results["model"].append(model)
         results["learning_rate"].append(lr)
         results["batch_size"].append(bs)
         results["max_epochs"].append(max_epochs)
@@ -42,12 +40,10 @@ def collect_results(args):
         results["best_test_accuracy"].append(one_exp_result["test_acc"])
         results["best_test_f1"].append(one_exp_result["test_f1"])
         results["best_test_loss"].append(one_exp_result["test_loss"])
-        results["exp_name"].append(one_exp_result["exp_name"])
+        results["exp_name"].append(one_exp_result["experiment"])
         results["best_iter"].append(one_exp_result["best_step"])
-        results["current_iter"].append(one_exp_result["current_step"])
         results["total_iter"].append(one_exp_result["total_steps"])
         results["total_epochs"].append(one_exp_result["total_epochs"])
-        results["early_stop"].append(one_exp_result["current_step"]<one_exp_result["total_steps"])
 	
 
     with open(os.path.join(args.results_dir, "results.jsonl"), "r") as reader:

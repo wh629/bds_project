@@ -2,8 +2,6 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:1
-#SBATCH --partition=v100_sxm2_4,p40_4,p100_4,v100_pci_2
 #SBATCH --time=48:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=wh629@nyu.edu
