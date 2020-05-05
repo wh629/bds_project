@@ -4,3 +4,7 @@
 *__pycache__/
 *logs/
 experiment_scripts/submit_sbatch.sh
+
+.analysis/*.json
+.analysis/*.png
+*.ipynb_checkpoints/
