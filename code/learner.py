@@ -371,8 +371,8 @@ class Learner():
             }
         """
         
-        best_path = os.path.join(self.save_path, model_name + '_best.pt')
-        best_rln_path = os.path.join(self.save_path, model_name + '_best_rln.pt')
+        best_path = os.path.join(self.save_path, model_name + '_' + task_name + '_best.pt')
+        best_rln_path = os.path.join(self.save_path, model_name + '_' + task_name + '_best_rln.pt')
         stop = False
         
         train_data = self.IO.tasks[task_name]['train']
